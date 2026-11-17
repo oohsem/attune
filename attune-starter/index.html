@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Attune — Audio Wellness Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+
+  <!-- Floating Prototype Setup Button -->
+  <button class="dev-toggle-btn" id="openDevPanelBtn">
+    <span class="status-badge-dot"></span>
+    ⚙ Prototype Audio Setup
+  </button>
+
+  <div class="prototype-stage">
+    <div class="device-frame">
+      <div class="device-notch"></div>
+      
+      <div class="toast-popup" id="toastNotification">Sound mixing coming soon.</div>
+
+      <div class="screen-container">
+
+        <!-- ==============================================
+             SCREEN 1: HOME (DEFAULT ROOT SCREEN)
+             ============================================== -->
+        <div class="screen active" id="screen-home">
+          <!-- Top Header -->
+          <div class="home-header">
+            
+            <div class="brand-logo" style="margin-right: 15px;">
+              att<span class="brand-u">u</span>ne
+            </div>
+          </div>
+
+          <!-- Decorative Wave Ribbon -->
+          <div style="height: 60px; margin-bottom: 6px;">
+            <svg viewBox="0 0 380 70" width="100%" height="70" fill="none">
+              <path d="M 0,35 C 70,70 120,5 200,35 C 280,65 330,5 380,35" stroke="#00d2ff" stroke-width="4" stroke-opacity="0.8" stroke-linecap="round"/>
+              <path d="M 0,35 C 90,5 140,70 210,35 C 280,5 340,65 380,35" stroke="#8a78ff" stroke-width="2.5" stroke-opacity="0.5"/>
+            </svg>
+          </div>
+
+          <!-- Existing SoundSpace -->
+          <div class="section-title">Start a SoundSpace.</div>
+          <div class="hex-cluster">
+            <button type="button" class="hex-card hex-1 home-preset" data-preset="focus" aria-label="Play Focus soundscape"><span>Focus</span></button>
+            <button type="button" class="hex-card hex-2 home-preset" data-preset="relax" aria-label="Play Relax soundscape"><span>Relax</span></button>
+            <button type="button" class="hex-card hex-3 home-preset" data-preset="rain" aria-label="Play Rain soundscape"><span>Rain</span></button>
+            <button type="button" class="hex-card hex-4 home-preset" data-preset="wind" aria-label="Play Wind soundscape"><span>Wind</span></button>
+            <button type="button" class="hex-card hex-5 home-preset" data-preset="water" aria-label="Play Water soundscape"><span>Water</span></button>
+            <button type="button" class="hex-card hex-6 home-preset" data-preset="storm" aria-label="Play Storm soundscape"><span>Storm</span></button>
+            <button type="button" class="hex-card hex-7 home-preset" data-preset="ambient" aria-label="Play Ambient soundscape"><span>Ambient</span></button>
+          </div>
+
+          <!-- Explore your sound -->
+          <div class="section-title">Build your own.</div>
+          <div class="hex-explore-cluster">
+            <button type="button" class="hex-card hex-e1 home-create" data-create="custom" aria-label="Create Custom soundscape"><span>Custom</span></button>
+            <button type="button" class="hex-card hex-e2 home-create" data-create="focus" aria-label="Create Focus soundscape"><span>Focus</span></button>
+            <button type="button" class="hex-card hex-e3 home-create" data-create="relax" aria-label="Create Relax soundscape"><span>Relax</span></button>
+          </div>
+
+          <!-- Bottom Navbar -->
+          <div class="bottom-navbar">
+            <div class="nav-item active">
+              <div class="nav-icon-smile">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                  <line x1="9" y1="9" x2="9.01" y2="9"/>
+                  <line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item hex-trigger">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="m19 11-8-8-8.5 8.5a2.12 2.12 0 1 0 3 3L14 6l5 5Z"/>
+                <path d="m18 13 4 4"/>
+                <path d="m14 17 4 4"/>
+              </svg>
+            </div>
+            <div class="nav-item hex-trigger">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="12" y1="3" x2="12" y2="21"/>
+                <line x1="6" y1="8" x2="6" y2="16"/>
+                <line x1="18" y1="8" x2="18" y2="16"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ==============================================
+             SCREEN 2: FOCUS / RELAX (Sound Selection Screen 1)
+             ============================================== -->
+        <div class="screen" id="screen-mode">
+          <div class="top-nav">
+            <div class="back-btn" id="modeBackBtn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </div>
+            <div class="brand-logo">att<span class="brand-u">u</span>ne</div>
+          </div>
+
+          <div class="sub-tagline">Build your Soundscape</div>
+          <h2 class="page-title">How would you like to start?</h2>
+
+          <div class="selection-cards-col">
+            <div class="big-choice-card" id="focusModeCard">
+              <div class="choice-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <rect x="9" y="9" width="6" height="6" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="choice-title">Focus</div>
+              <div class="choice-subtitle">Stay Engaged and Present</div>
+            </div>
+
+            <div class="big-choice-card" id="relaxModeCard">
+              <div class="choice-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M7 13c2.5 3 6.5 3 9 0" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="choice-title">Relax</div>
+              <div class="choice-subtitle">Slow down and decompress</div>
+            </div>
+          </div>
+
+          <button class="cta-button disabled" id="modeStartBtn">Start</button>
+        </div>
+
+
+        <!-- ==============================================
+             SCREEN 3: QUICK START / CHOOSE MY SOUNDS (Sound Selection Screen 2)
+             ============================================== -->
+        <div class="screen" id="screen-entry-type">
+          <div class="top-nav">
+            <div class="back-btn" id="entryTypeBackBtn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </div>
+            <div class="brand-logo">att<span class="brand-u">u</span>ne</div>
+          </div>
+
+          <div class="sub-tagline">Build your Soundscape</div>
+          <h2 class="page-title">How would you like to start?</h2>
+
+          <div class="selection-cards-col">
+            <div class="big-choice-card" id="quickStartChoiceCard">
+              <div class="choice-icon">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/>
+                  <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/>
+                </svg>
+              </div>
+              <div class="choice-title">Quick Start</div>
+            </div>
+
+            <div class="big-choice-card" id="customSoundsChoiceCard">
+              <div class="choice-icon">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="4" x2="8" y2="20"/>
+                  <line x1="12" y1="2" x2="12" y2="22"/>
+                  <line x1="16" y1="6" x2="16" y2="18"/>
+                  <line x1="4" y1="9" x2="4" y2="15"/>
+                  <line x1="20" y1="10" x2="20" y2="14"/>
+                </svg>
+              </div>
+              <div class="choice-title" style="font-size: 24px; line-height: 1.2;">Choose my<br>Sounds</div>
+            </div>
+          </div>
+
+          <button class="cta-button disabled" id="entryTypeStartBtn">Start</button>
+        </div>
+
+
+        <!-- ==============================================
+             SCREEN 4: DYNAMIC SOUND SELECTION (Sound Selection Screen 3a & 3b)
+             ============================================== -->
+        <div class="screen" id="screen-sound-selection">
+          <div class="top-nav">
+            <div class="back-btn" id="soundSelectBackBtn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </div>
+            <div class="brand-logo">att<span class="brand-u">u</span>ne</div>
+          </div>
+
+          <div class="sub-tagline">Build your Soundscape</div>
+          <h2 class="page-title">How would you like to start?</h2>
+
+          <div class="sound-categories-list" id="soundCategoriesAccordion">
+            <!-- Dynamically populated from uploaded folders -->
+          </div>
+
+          <button class="cta-button disabled" id="soundSelectStartBtn">Start</button>
+        </div>
+
+
+        <!-- ==============================================
+             SCREEN 5: LISTENING SESSION
+             ============================================== -->
+        <div class="screen" id="screen-listening">
+          <div style="width: 100%;">
+            <div class="top-nav">
+              <div class="back-btn" id="listeningBackBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </div>
+              <div class="brand-logo">att<span class="brand-u">u</span>ne</div>
+            </div>
+
+            <div class="now-listening-label">NOW LISTENING</div>
+            <h1 class="now-listening-title" id="nowListeningTitle">Deep Focus</h1>
+          </div>
+
+          <div class="listening-wave-wrapper" id="listeningWaveWrap">
+            <div class="ambient-glow"></div>
+            <svg viewBox="0 0 380 150" fill="none" style="position: relative; z-index: 2;">
+              <defs>
+                <linearGradient id="listeningWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#2a5298" stop-opacity="0.1"/>
+                  <stop offset="35%" stop-color="#00e5ff" stop-opacity="0.95"/>
+                  <stop offset="65%" stop-color="#0072ff" stop-opacity="0.95"/>
+                  <stop offset="100%" stop-color="#00f2fe" stop-opacity="0.1"/>
+                </linearGradient>
+              </defs>
+              <path d="M 0,75 C 65,130 115,20 190,75 C 265,130 315,20 380,75" stroke="url(#listeningWaveGrad)" stroke-width="6" stroke-linecap="round"/>
+              <path d="M 0,75 C 75,30 125,120 195,75 C 265,30 325,120 380,75" stroke="#00e5ff" stroke-width="2" stroke-opacity="0.7"/>
+            </svg>
+          </div>
+
+          <div style="width: 100%;">
+            <div class="listening-status-row">
+              <div class="pulse-dot-indicator">
+                <span class="pulse-dot" id="listeningPulseDot"></span>
+                <span id="listeningStateLabel">Soundscape Playing</span>
+              </div>
+              <div class="listening-subtext" id="listeningPersonalizedText">Personalized for Focus</div>
+              <div class="timer-countdown-badge" id="timerBadge" style="display: none;">00:00</div>
+            </div>
+
+            <div class="listening-control-bar">
+              <div class="control-side-btn" id="openTimerBtn" title="Set Session Timer">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+
+              <div class="play-pause-circle" id="masterPlayPauseBtn" title="Play / Pause">
+                <svg id="pauseIconSvg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
+                  <rect x="14" y="4" width="4" height="16" rx="1.5"></rect>
+                </svg>
+                <svg id="playIconSvg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display: none; margin-left: 2px;">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </div>
+
+              <div class="control-side-btn" id="mixerBtn" title="Sound Mixer">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timer Modal Sheet -->
+        <div class="modal-overlay" id="timerModal">
+          <div class="modal-sheet">
+            <div class="modal-title">Session Timer</div>
+            <div class="timer-options-grid">
+              <div class="timer-chip" data-mins="5">5 min</div>
+              <div class="timer-chip" data-mins="10">10 min</div>
+              <div class="timer-chip" data-mins="15">15 min</div>
+              <div class="timer-chip" data-mins="30">30 min</div>
+              <div class="timer-chip" data-mins="60">60 min</div>
+              <div class="timer-chip" data-mins="0">Off</div>
+            </div>
+            <button class="modal-close-btn" id="closeTimerModalBtn">Close</button>
+          </div>
+        </div>
+
+      </div><!-- /.screen-container -->
+    </div><!-- /.device-frame -->
+  </div><!-- /.prototype-stage -->
+
+
+  <!-- DEVELOPER PROTOTYPE CONFIGURATION MODAL -->
+  <div class="dev-modal-backdrop" id="devModalBackdrop">
+    <div class="dev-panel">
+      <h2>
+        <span>Prototype Audio Setup</span>
+        <button id="closeDevModalCross" style="background:none; border:none; color:#cbd5e1; font-size:24px; cursor:pointer;">&times;</button>
+      </h2>
+      <p>
+        Upload the test folder and MP3 files below. Until custom files are selected, built-in synthesis ensures every layer and preview works instantly without error.
+      </p>
+
+      <div class="dev-section-box">
+        <div class="dev-section-title">
+          <span>Audio Dataset Directory</span>
+          <span class="status-check" id="datasetStatus">Default Categories Ready</span>
+        </div>
+        <p style="margin-bottom: 8px; font-size: 11px;">Select the root <code>audio-dataset</code> directory containing scene subfolders with <code>mp3/</code> files.</p>
+        <input type="file" id="datasetFolderInput" class="dev-file-input" webkitdirectory directory multiple>
+      </div>
+
+      <div class="dev-section-box">
+        <div class="dev-section-title">
+          <span>Focus Frequency (1 MP3)</span>
+          <span class="status-check" id="focusFreqStatus">Built-in Beta Tone</span>
+        </div>
+        <input type="file" id="focusFreqInput" class="dev-file-input" accept="audio/mp3,audio/*">
+      </div>
+
+      <div class="dev-section-box">
+        <div class="dev-section-title">
+          <span>Relax Frequency (1 MP3)</span>
+          <span class="status-check" id="relaxFreqStatus">Built-in Theta Tone</span>
+        </div>
+        <input type="file" id="relaxFreqInput" class="dev-file-input" accept="audio/mp3,audio/*">
+      </div>
+
+      <div class="dev-section-box">
+        <div class="dev-section-title">
+          <span>Quick Start Soundscape (5 MP3s)</span>
+          <span class="status-check" id="quickStartStatus">5/5 Default Layers</span>
+        </div>
+        <input type="file" id="quickStartFilesInput" class="dev-file-input" accept="audio/mp3,audio/*" multiple>
+      </div>
+
+      <button class="close-dev-btn" id="saveAndExitDevBtn">Save & Return to Prototype</button>
+    </div>
+  </div>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
