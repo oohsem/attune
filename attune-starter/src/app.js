@@ -1,6 +1,5 @@
-/* =================================================================
-       GLOBAL STATE & AUDIO ENGINE
-       ================================================================= */
+import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
+
     const State = {
       currentScreen: 'screen-home',
       selectedMode: null, // 'focus' | 'relax'
@@ -13,6 +12,9 @@
       previewNode: null,
       previewSoundId: null,
       returnScreen: 'screen-home',
+      currentPreset: null,
+      currentSessionSounds: [],
+      createExpanded: false,
     };
 
     // Default Sample Dataset (Replaces immediately when uploaded)
@@ -132,9 +134,78 @@
       return { sources: [osc1, osc2], gain };
     }
 
+    // Each of these named sample types has a real recording in audio-dataset.zip.
+    // The Fire tile has no matching MP3 in the dataset and remains synthesized.
+    const DEFAULT_BUNDLED_TRACK = {
+      rain: 'amber-footpath-17-rain',
+      wind: 'amber-footpath-03-wind',
+      water: 'ancient-canopy-01-water-stream',
+      birds: 'ancient-canopy-13-birds',
+      thunder: 'amber-footpath-01-distant-thunder',
+      drone: 'distant-reverie-05-pad',
+      crickets: 'open-pasture-19-crickets',
+      rustle: 'amber-footpath-19-rustling-leaves'
+    };
+
+    function resolveBundledTrack(item) {
+      if (!item || typeof item !== 'object') return null;
+      // Named individual tracks take precedence over synthType fallbacks.
+      return AUDIO_BY_ID.get(item.audioId) ||
+        AUDIO_BY_ID.get(DEFAULT_BUNDLED_TRACK[item.synthType]) || null;
+    }
+
+    function playBundledLayer(track) {
+      const ctx = getAudioContext();
+      const audio = new Audio(track.src);
+      audio.loop = true;
+      audio.preload = 'auto';
+      const source = ctx.createMediaElementSource(audio);
+      const gain = ctx.createGain();
+      // Conservative starting level: multiple recordings will be mixed.
+      gain.gain.value = 0.25;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+
+      let stopped = false;
+      audio.addEventListener('error', () => {
+        if (!stopped) showToast('Audio missing: check public/audio-dataset');
+        console.error('Cannot load bundled audio:', track.src);
+      });
+      audio.play().catch(error => {
+        if (!stopped) console.warn('Unable to play bundled audio:', track.src, error);
+      });
+
+      return {
+        id: track.id,
+        name: track.name,
+        stop: () => {
+          if (stopped) return;
+          stopped = true;
+          audio.pause();
+          audio.removeAttribute('src');
+          audio.load();
+          source.disconnect();
+          gain.disconnect();
+        },
+        pause: () => audio.pause(),
+        resume: () => audio.play().catch(error => console.warn(error)),
+        setVolume: value => {
+          const level = Math.max(0, Math.min(1, Number(value) || 0));
+          gain.gain.setTargetAtTime(level, ctx.currentTime, 0.03);
+        },
+        getVolume: () => gain.gain.value
+      };
+    }
+
     // Play a single audio layer (either from uploaded MP3 file or built-in generator)
     function playAudioLayer(fileOrItem, isFrequency = false, mode = 'focus') {
       const ctx = getAudioContext();
+      // Built-in MP3s take priority over synthetic placeholders.
+      // Frequency generators are intentionally handled by the existing branch.
+      if (!isFrequency) {
+        const bundled = resolveBundledTrack(fileOrItem);
+        if (bundled) return playBundledLayer(bundled);
+      }
 
       if (fileOrItem && fileOrItem instanceof File) {
         // Uploaded MP3 file
@@ -209,9 +280,6 @@
       setTimeout(() => t.classList.remove('visible'), 2400);
     }
 
-    /* =================================================================
-       SCREEN 1 — HOME
-       ================================================================= */
     // Real, one-tap soundscapes on the home screen.
     // These use the current synthesis fallback until licensed MP3 assets are bundled.
     const HomePresets = {
@@ -224,17 +292,32 @@
       ambient: { title: 'Ambient Calm', mode: 'relax', types: ['drone', 'wind'] }
     };
 
-    document.querySelectorAll('.home-preset').forEach(button => {
-      button.addEventListener('click', () => {
-        const preset = HomePresets[button.dataset.preset];
-        if (!preset) return;
-        State.selectedMode = preset.mode;
+    // Delegated click handling also supports newly saved Soundscapes.
+    document.getElementById('screen-home').addEventListener('click', event => {
+      const button = event.target.closest('.home-preset');
+      if (!button) return;
+      const savedId = button.dataset.savedId;
+      if (savedId) {
+        const saved = getSavedSoundscapes().find(item => item.id === savedId);
+        if (!saved) return;
         State.returnScreen = 'screen-home';
-        initListeningScreen(preset.title, preset.mode);
-        preset.types.forEach(type => {
-          State.activeAudioLayers.push(playAudioLayer({ synthType: type }));
-        });
-      });
+        State.selectedMode = saved.mode;
+        State.currentPreset = null;
+        State.currentSessionSounds = saved.sounds;
+        initListeningScreen(saved.title, saved.mode);
+        saved.sounds.forEach(sound => State.activeAudioLayers.push(playAudioLayer(sound)));
+        syncFavoriteButton();
+        return;
+      }
+      const preset = HomePresets[button.dataset.preset];
+      if (!preset) return;
+      State.selectedMode = preset.mode;
+      State.returnScreen = 'screen-home';
+      State.currentPreset = button.dataset.preset;
+      State.currentSessionSounds = preset.types.map(type => ({ name: type.charAt(0).toUpperCase() + type.slice(1), synthType: type }));
+      initListeningScreen(preset.title, preset.mode);
+      preset.types.forEach(type => State.activeAudioLayers.push(playAudioLayer({ synthType: type })));
+      syncFavoriteButton();
     });
 
     document.querySelectorAll('.home-create').forEach(button => {
@@ -254,9 +337,7 @@
       button.addEventListener('click', () => navigateTo('screen-mode'));
     });
 
-    /* =================================================================
-       SCREEN 2 — FOCUS / RELAX
-       ================================================================= */
+
     const focusCard = document.getElementById('focusModeCard');
     const relaxCard = document.getElementById('relaxModeCard');
     const modeStartBtn = document.getElementById('modeStartBtn');
@@ -280,9 +361,7 @@
       navigateTo('screen-entry-type');
     });
 
-    /* =================================================================
-       SCREEN 3 — QUICK START / CHOOSE MY SOUNDS
-       ================================================================= */
+
     const quickStartCard = document.getElementById('quickStartChoiceCard');
     const customSoundsCard = document.getElementById('customSoundsChoiceCard');
     const entryTypeStartBtn = document.getElementById('entryTypeStartBtn');
@@ -311,9 +390,6 @@
       }
     });
 
-    /* =================================================================
-       SCREEN 4 — DYNAMIC SOUND SELECTION
-       ================================================================= */
     const categoriesAccordionEl = document.getElementById('soundCategoriesAccordion');
     const soundSelectStartBtn = document.getElementById('soundSelectStartBtn');
 
@@ -449,9 +525,6 @@
       startCustomSoundscape();
     });
 
-    /* =================================================================
-       SCREEN 5 — LISTENING SESSION
-       ================================================================= */
     function stopAllActiveAudio() {
       State.activeAudioLayers.forEach(l => l.stop());
       State.activeAudioLayers = [];
@@ -464,6 +537,7 @@
 
     function initListeningScreen(title, mode) {
       stopAllActiveAudio();
+      syncFavoriteButton();
 
       document.getElementById('nowListeningTitle').textContent = title;
       document.getElementById('listeningPersonalizedText').textContent =
@@ -483,6 +557,7 @@
     // Quick Start Flow: 5 files + Focus/Relax frequency
     function startQuickStartSoundscape() {
       State.returnScreen = 'screen-entry-type';
+      State.currentSessionSounds = ['wind', 'water', 'rain', 'thunder', 'drone'].map(type => ({ name: type, synthType: type }));
       const mode = State.selectedMode || 'focus';
       const title = mode === 'focus' ? 'Deep Focus' : 'Deep Relax';
       initListeningScreen(title, mode);
@@ -503,6 +578,7 @@
     // Choose My Sounds Flow: All selected sounds + Focus/Relax frequency
     function startCustomSoundscape() {
       State.returnScreen = 'screen-sound-selection';
+      State.currentSessionSounds = Array.from(State.selectedSoundObjects.values()).map(sound => ({ name: sound.name, synthType: sound.synthType || 'rain' }));
       const mode = State.selectedMode || 'focus';
       const title = mode === 'focus' ? 'Focus Soundscape' : 'Relax Soundscape';
       initListeningScreen(title, mode);
@@ -560,9 +636,6 @@
       showToast('Sound mixing coming soon.');
     });
 
-    /* =================================================================
-       TIMER MODAL
-       ================================================================= */
     const timerModal = document.getElementById('timerModal');
     const openTimerBtn = document.getElementById('openTimerBtn');
     const closeTimerModalBtn = document.getElementById('closeTimerModalBtn');
@@ -613,10 +686,6 @@
       const s = State.timerSeconds % 60;
       timerBadge.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
-
-    /* =================================================================
-       DEV CONFIGURATION PANEL
-       ================================================================= */
     const devModal = document.getElementById('devModalBackdrop');
     document.getElementById('openDevPanelBtn').addEventListener('click', () => devModal.classList.add('open'));
     document.getElementById('closeDevModalCross').addEventListener('click', () => devModal.classList.remove('open'));
@@ -699,6 +768,233 @@
         AudioDataset.quickStartFiles = files;
         document.getElementById('quickStartStatus').textContent = `${files.length}/5 Ready`;
       }
+    });
+
+    const DEFAULT_CREATE_SOUNDS = [
+      { id: 'rain', name: 'Rain', synthType: 'rain', palette: 'rain', symbol: '☂' },
+      { id: 'ocean', name: 'Ocean', synthType: 'water', palette: 'ocean', symbol: '≈' },
+      { id: 'forest', name: 'Forest', synthType: 'wind', palette: 'forest', symbol: '♧' },
+      { id: 'stream', name: 'Stream', synthType: 'water', palette: 'stream', symbol: '≈' },
+      { id: 'birds', name: 'Birds', synthType: 'birds', palette: 'birds', symbol: '♪' },
+      { id: 'wind', name: 'Wind', synthType: 'wind', palette: 'wind', symbol: '≋' },
+      { id: 'piano', name: 'Piano', synthType: 'drone', palette: 'piano', symbol: '♫' },
+      { id: 'fire', name: 'Fire', synthType: 'rustle', palette: 'fire', symbol: '♨' },
+      { id: 'night', name: 'Night', synthType: 'crickets', palette: 'night', symbol: '☾' },
+      { id: 'thunder', name: 'Thunder', synthType: 'thunder', palette: 'rain', symbol: 'ϟ' },
+      { id: 'meadow', name: 'Meadow', synthType: 'birds', palette: 'forest', symbol: '✿' },
+      { id: 'ambient', name: 'Ambient', synthType: 'drone', palette: 'night', symbol: '◌' }
+    ];
+    // Map the familiar Figma tiles to recordings that actually exist.
+    const CREATE_TILE_TRACKS = {
+      rain: 'amber-footpath-17-rain',
+      ocean: 'coastal-crossroads-01-ocean-waves',
+      forest: 'amber-footpath-09-forest-tone',
+      stream: 'ancient-canopy-01-water-stream',
+      birds: 'ancient-canopy-13-birds',
+      wind: 'amber-footpath-03-wind',
+      piano: 'ivory-afterglow-07-mono-piano',
+      night: 'twilight-chorus-01-insects',
+      thunder: 'amber-footpath-01-distant-thunder',
+      meadow: 'open-pasture-17-grass-wind',
+      ambient: 'distant-reverie-05-pad'
+      // Fire has no equivalent file; it uses the procedural fallback for now.
+    };
+    DEFAULT_CREATE_SOUNDS.forEach(sound => {
+      sound.audioId = CREATE_TILE_TRACKS[sound.id] || null;
+      // No fire recording exists in the dataset. Use synthetic sound, not leaves.
+      if (sound.id === 'fire') sound.synthType = 'fire';
+    });
+
+    // Search unlocks every one of the 400 recordings, without crowding the default UI.
+    const librarySounds = AUDIO_CATALOG.map(track => ({
+      id: track.id,
+      name: `${track.name} ${String(track.take).padStart(2, '0')}`,
+      collection: track.collection,
+      audioId: track.id,
+      synthType: 'drone',
+      palette: 'night',
+      symbol: '♪'
+    }));
+    const allCreateSounds = [...DEFAULT_CREATE_SOUNDS, ...librarySounds];
+    const createSoundById = new Map(allCreateSounds.map(sound => [sound.id, sound]));
+
+    const createSearchInput = document.getElementById('createSearch');
+    const createSoundGrid = document.getElementById('createSoundGrid');
+    const createStartButton = document.getElementById('startCreateBtn');
+    const createSelectedCount = document.getElementById('createSelectedCount');
+
+    // Preselect three sounds to demonstrate the mixing workflow.
+    const createSelection = new Set(['rain', 'birds', 'wind']);
+    let createMode = 'relax';
+
+    function goToCreate(focusSearch = false) {
+      State.createPage = 0;
+      createSearchInput.value = '';
+      document.getElementById('showMoreSoundsBtn').innerHTML = 'See more <span aria-hidden="true">→</span>';
+      renderCreateSounds();
+      navigateTo('screen-create');
+      if (focusSearch) createSearchInput.focus();
+    }
+    document.getElementById('navCreate').addEventListener('click', () => goToCreate());
+    document.getElementById('navSounds').addEventListener('click', () => goToCreate(true));
+    document.getElementById('navHome').addEventListener('click', () => navigateTo('screen-home'));
+    document.getElementById('createBackBtn').addEventListener('click', () => navigateTo('screen-home'));
+    createSearchInput.addEventListener('input', () => { State.createPage = 0; renderCreateSounds(); });
+    document.getElementById('showMoreSoundsBtn').addEventListener('click', () => {
+      const query = createSearchInput.value.trim().toLowerCase();
+      const matches = query
+        ? allCreateSounds.filter(sound => `${sound.name} ${sound.collection || ''}`.toLowerCase().includes(query))
+        : DEFAULT_CREATE_SOUNDS;
+      const pageCount = Math.max(1, Math.ceil(matches.length / 9));
+      State.createPage = ((State.createPage || 0) + 1) % pageCount;
+      renderCreateSounds();
+    });
+    document.getElementById('createModeFocus').addEventListener('click', () => setCreateMode('focus'));
+    document.getElementById('createModeRelax').addEventListener('click', () => setCreateMode('relax'));
+    function setCreateMode(mode) {
+      createMode = mode;
+      ['focus', 'relax'].forEach(value => {
+        const button = document.getElementById('createMode' + (value === 'focus' ? 'Focus' : 'Relax'));
+        button.classList.toggle('active', value === mode);
+        button.setAttribute('aria-pressed', String(value === mode));
+      });
+    }
+    function renderCreateSounds() {
+      const query = createSearchInput.value.trim().toLowerCase();
+      const matches = query
+        ? allCreateSounds.filter(sound => `${sound.name} ${sound.collection || ''}`.toLowerCase().includes(query))
+        : DEFAULT_CREATE_SOUNDS;
+      const page = Math.min(State.createPage || 0, Math.max(0, Math.ceil(matches.length / 9) - 1));
+      const visible = matches.slice(page * 9, (page + 1) * 9);
+      const seeMore = document.getElementById('showMoreSoundsBtn');
+      seeMore.hidden = matches.length <= 9;
+      seeMore.textContent = page === Math.ceil(matches.length / 9) - 1
+        ? 'See first ↑' : 'See more →';
+      createSoundGrid.replaceChildren();
+      visible.forEach(sound => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sound-tile palette-' + sound.palette;
+        if (sound.collection) button.title = `${sound.name} — ${sound.collection}`;
+        button.setAttribute('aria-pressed', String(createSelection.has(sound.id)));
+        button.setAttribute('aria-label', `${createSelection.has(sound.id) ? 'Remove' : 'Add'} ${sound.name}`);
+        if (createSelection.has(sound.id)) button.classList.add('selected');
+        button.innerHTML = `<span class="sound-tile-symbol" aria-hidden="true">${sound.symbol}</span><span class="sound-tile-name">${escapeHTML(sound.name)}</span><span class="sound-tile-check" aria-hidden="true">✓</span>`;
+        button.addEventListener('click', () => {
+          if (createSelection.has(sound.id)) createSelection.delete(sound.id);
+          else createSelection.add(sound.id);
+          renderCreateSounds();
+        });
+        createSoundGrid.appendChild(button);
+      });
+      document.getElementById('createNoResults').hidden = visible.length !== 0;
+      createSelectedCount.textContent = `${createSelection.size} sound${createSelection.size === 1 ? '' : 's'} selected`;
+      createStartButton.disabled = createSelection.size === 0;
+    }
+    createStartButton.addEventListener('click', () => {
+      const sounds = [...createSelection].map(id => createSoundById.get(id)).filter(Boolean);
+      if (sounds.length === 0) return;
+      State.selectedMode = createMode;
+      State.currentPreset = null;
+      State.currentSessionSounds = sounds.map(({ name, synthType, audioId }) => ({ name, synthType, audioId }));
+      State.returnScreen = 'screen-create';
+      const title = createMode === 'focus' ? 'Deep Focus' : 'Deep Relax';
+      initListeningScreen(title, createMode);
+      sounds.forEach(sound => State.activeAudioLayers.push(playAudioLayer({ synthType: sound.synthType, audioId: sound.audioId })));
+      syncFavoriteButton();
+    });
+
+    // Only sound identifiers and modes are stored, never temporary uploaded files.
+    const SAVED_KEY = 'attune.soundscapes.v1';
+    function getSavedSoundscapes() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+        return Array.isArray(saved) ? saved.filter(item => item && item.id && Array.isArray(item.sounds)) : [];
+      } catch { return []; }
+    }
+    function sessionSignature(mode, sounds) {
+      return `${mode}:` + sounds.map(sound => sound.audioId || sound.synthType).sort().join(',');
+    }
+    function syncFavoriteButton() {
+      const button = document.getElementById('saveSoundscapeBtn');
+      const saved = getSavedSoundscapes();
+      const isSaved = State.currentSessionSounds.length > 0 && saved.some(item =>
+        sessionSignature(item.mode, item.sounds) === sessionSignature(State.selectedMode, State.currentSessionSounds));
+      button.classList.toggle('saved', isSaved);
+      button.setAttribute('aria-pressed', String(isSaved));
+      button.setAttribute('aria-label', isSaved ? 'Remove saved soundscape' : 'Save this soundscape');
+    }
+    document.getElementById('saveSoundscapeBtn').addEventListener('click', () => {
+      const sounds = State.currentSessionSounds;
+      if (!sounds.length) { showToast('No sounds to save yet.'); return; }
+      const saved = getSavedSoundscapes();
+      const signature = sessionSignature(State.selectedMode, sounds);
+      const existingIndex = saved.findIndex(item => sessionSignature(item.mode, item.sounds) === signature);
+      if (existingIndex !== -1) {
+        saved.splice(existingIndex, 1);
+        showToast('Removed from saved soundscapes');
+      } else {
+        saved.unshift({
+          id: String(Date.now()),
+          title: document.getElementById('nowListeningTitle').textContent,
+          mode: State.selectedMode || 'relax',
+          sounds: sounds.map(({ name, synthType, audioId }) => ({ name, synthType, audioId }))
+        });
+        showToast('Saved to your Soundscapes');
+      }
+      try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); }
+      catch { showToast('Saving unavailable on this device'); }
+      syncFavoriteButton();
+      renderSavedSoundscapes();
+    });
+    const starterGridMarkup = document.getElementById('savedSoundscapeGrid').innerHTML;
+    function renderSavedSoundscapes() {
+      const saved = getSavedSoundscapes().slice(0, 7);
+      const grid = document.getElementById('savedSoundscapeGrid');
+      const subtitle = document.getElementById('savedSubtitle');
+      if (!saved.length) {
+        subtitle.textContent = 'Starter soundscapes · save yours with ♡';
+        grid.innerHTML = starterGridMarkup;
+        return;
+      }
+      subtitle.textContent = `${saved.length} of your saved mix${saved.length === 1 ? '' : 'es'}`;
+      grid.replaceChildren();
+      saved.forEach((item, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `hex-card home-preset home-hex h${index + 1}`;
+        button.dataset.savedId = item.id;
+        const label = document.createElement('span');
+        label.textContent = item.title;
+        button.title = item.title;
+        button.appendChild(label);
+        grid.appendChild(button);
+      });
+      // Add starter samples after the user's saved mixes to keep the honeycomb layout balanced.
+      const suggested = [
+        ['relax', 'Calm'], ['focus', 'Focus'], ['storm', 'Storm'],
+        ['water', 'Flow'], ['ambient', 'Ambient'], ['rain', 'Rain'], ['wind', 'Wind']
+      ];
+      suggested.slice(0, 7 - saved.length).forEach(([preset, title], index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `hex-card home-preset home-hex h${saved.length + index + 1}`;
+        button.dataset.preset = preset;
+        const label = document.createElement('span');
+        label.textContent = title;
+        button.appendChild(label);
+        grid.appendChild(button);
+      });
+    }
+    renderCreateSounds();
+    renderSavedSoundscapes();
+    ['openTimerBtn', 'masterPlayPauseBtn', 'mixerBtn'].forEach(id => {
+      const element = document.getElementById(id);
+      element.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault(); element.click();
+        }
+      });
     });
 
     // Boot: Ensure Home is active and ready

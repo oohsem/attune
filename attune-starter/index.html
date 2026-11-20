@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Attune — Audio Wellness Prototype</title>
+  <title>Attune — Your Soundspace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -24,79 +24,67 @@
       <div class="toast-popup" id="toastNotification">Sound mixing coming soon.</div>
 
       <div class="screen-container">
-
-        <!-- ==============================================
-             SCREEN 1: HOME (DEFAULT ROOT SCREEN)
-             ============================================== -->
         <div class="screen active" id="screen-home">
-          <!-- Top Header -->
-          <div class="home-header">
-            
-            <div class="brand-logo" style="margin-right: 15px;">
-              att<span class="brand-u">u</span>ne
-            </div>
-          </div>
-
-          <!-- Decorative Wave Ribbon -->
-          <div style="height: 60px; margin-bottom: 6px;">
-            <svg viewBox="0 0 380 70" width="100%" height="70" fill="none">
-              <path d="M 0,35 C 70,70 120,5 200,35 C 280,65 330,5 380,35" stroke="#00d2ff" stroke-width="4" stroke-opacity="0.8" stroke-linecap="round"/>
-              <path d="M 0,35 C 90,5 140,70 210,35 C 280,5 340,65 380,35" stroke="#8a78ff" stroke-width="2.5" stroke-opacity="0.5"/>
-            </svg>
-          </div>
-
-          <!-- Existing SoundSpace -->
-          <div class="section-title">Start a SoundSpace.</div>
-          <div class="hex-cluster">
-            <button type="button" class="hex-card hex-1 home-preset" data-preset="focus" aria-label="Play Focus soundscape"><span>Focus</span></button>
-            <button type="button" class="hex-card hex-2 home-preset" data-preset="relax" aria-label="Play Relax soundscape"><span>Relax</span></button>
-            <button type="button" class="hex-card hex-3 home-preset" data-preset="rain" aria-label="Play Rain soundscape"><span>Rain</span></button>
-            <button type="button" class="hex-card hex-4 home-preset" data-preset="wind" aria-label="Play Wind soundscape"><span>Wind</span></button>
-            <button type="button" class="hex-card hex-5 home-preset" data-preset="water" aria-label="Play Water soundscape"><span>Water</span></button>
-            <button type="button" class="hex-card hex-6 home-preset" data-preset="storm" aria-label="Play Storm soundscape"><span>Storm</span></button>
-            <button type="button" class="hex-card hex-7 home-preset" data-preset="ambient" aria-label="Play Ambient soundscape"><span>Ambient</span></button>
-          </div>
-
-          <!-- Explore your sound -->
-          <div class="section-title">Build your own.</div>
-          <div class="hex-explore-cluster">
-            <button type="button" class="hex-card hex-e1 home-create" data-create="custom" aria-label="Create Custom soundscape"><span>Custom</span></button>
-            <button type="button" class="hex-card hex-e2 home-create" data-create="focus" aria-label="Create Focus soundscape"><span>Focus</span></button>
-            <button type="button" class="hex-card hex-e3 home-create" data-create="relax" aria-label="Create Relax soundscape"><span>Relax</span></button>
-          </div>
-
-          <!-- Bottom Navbar -->
-          <div class="bottom-navbar">
-            <div class="nav-item active">
-              <div class="nav-icon-smile">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round">
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
-                </svg>
-              </div>
-            </div>
-            <div class="nav-item hex-trigger">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="m19 11-8-8-8.5 8.5a2.12 2.12 0 1 0 3 3L14 6l5 5Z"/>
-                <path d="m18 13 4 4"/>
-                <path d="m14 17 4 4"/>
-              </svg>
-            </div>
-            <div class="nav-item hex-trigger">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <line x1="12" y1="3" x2="12" y2="21"/>
-                <line x1="6" y1="8" x2="6" y2="16"/>
-                <line x1="18" y1="8" x2="18" y2="16"/>
-              </svg>
-            </div>
-          </div>
-        </div>
+  <header class="home-top"><span class="home-top-spacer"></span><span class="brand-logo">att<span class="brand-u">u</span>ne</span></header>
+  <div class="home-hero"><svg class="hero-wave" viewBox="0 0 380 118" aria-hidden="true" preserveAspectRatio="none"><defs><linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2851db" stop-opacity=".15"/><stop offset=".3" stop-color="#53b7ff" stop-opacity=".85"/><stop offset=".65" stop-color="#80e6ff" stop-opacity=".65"/><stop offset="1" stop-color="#4266e9" stop-opacity=".24"/></linearGradient></defs><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="url(#heroGradient)" stroke-width="24" stroke-linecap="round" opacity=".42"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#3675ff" stroke-width="12" opacity=".44"/><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="#93eaff" stroke-width="2" opacity=".65"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#72a8ff" stroke-width="2" opacity=".8"/></svg></div>
+  <div class="home-section-heading"><h2>Saved Soundscapes</h2><span id="savedSubtitle">Starter soundscapes</span></div>
+  <div class="home-hex-cluster" id="savedSoundscapeGrid" aria-label="Soundscapes">
+    <button class="hex-card home-preset home-hex h1" data-preset="relax"><span>Calm</span></button>
+    <button class="hex-card home-preset home-hex h2" data-preset="focus"><span>Happy</span></button>
+    <button class="hex-card home-preset home-hex h3" data-preset="storm"><span>Excite</span></button>
+    <button class="hex-card home-preset home-hex h4" data-preset="water"><span>Joy</span></button>
+    <button class="hex-card home-preset home-hex h5" data-preset="ambient"><span>Pride</span></button>
+    <button class="hex-card home-preset home-hex h6" data-preset="rain"><span>Calm</span></button>
+    <button class="hex-card home-preset home-hex h7" data-preset="wind"><span>Focus</span></button>
+  </div>
+  <div class="home-section-heading home-second-heading"><h2>Made from your SoundPrint</h2><span>Suggested mixes</span></div>
+  <div class="home-soundprint-grid" aria-label="Suggested soundprints">
+    <button class="hex-card home-preset soundprint-hex" data-preset="rain"><span>Calm</span></button>
+    <button class="hex-card home-preset soundprint-hex" data-preset="water"><span>Flow</span></button>
+    <button class="hex-card home-preset soundprint-hex" data-preset="relax"><span>Rest</span></button>
+  </div>
+  <nav class="bottom-navbar app-bottom-nav" aria-label="Main navigation">
+    <button class="nav-item active" type="button" id="navHome" aria-current="page" aria-label="Home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/></svg><span>Home</span>
+    </button>
+    <button class="nav-item" type="button" id="navCreate" aria-label="Create a soundscape">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg><span>Create</span>
+    </button>
+    <button class="nav-item" type="button" id="navSounds" aria-label="Browse sounds">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 6v12M22 10v4"/></svg><span>Sounds</span>
+    </button>
+  </nav>
+</div>
 
 
-        <!-- ==============================================
-             SCREEN 2: FOCUS / RELAX (Sound Selection Screen 1)
-             ============================================== -->
+
+
+<div class="screen" id="screen-create">
+  <header class="top-nav create-top">
+    <button class="back-btn" id="createBackBtn" type="button" aria-label="Back to home"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m14 5-7 7 7 7"/></svg></button>
+    <span class="brand-logo">att<span class="brand-u">u</span>ne</span>
+  </header>
+  <div class="create-kicker">New Session</div>
+  <h1 class="create-title">What sounds good right now?</h1>
+  <label class="create-search-bar">
+    <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2.2" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>
+    <input type="search" id="createSearch" placeholder='e.g., “Rain”, “Fire Crackling”, etc.' aria-label="Search sounds" autocomplete="off"/>
+  </label>
+  <div class="sound-grid-head"><h2>Popular sounds</h2><button type="button" id="showMoreSoundsBtn">See more <span aria-hidden="true">→</span></button></div>
+  <div class="create-sounds-area">
+    <div class="create-grid-wave" aria-hidden="true"><svg class="hero-wave" viewBox="0 0 380 118" aria-hidden="true" preserveAspectRatio="none"><defs><linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2851db" stop-opacity=".15"/><stop offset=".3" stop-color="#53b7ff" stop-opacity=".85"/><stop offset=".65" stop-color="#80e6ff" stop-opacity=".65"/><stop offset="1" stop-color="#4266e9" stop-opacity=".24"/></linearGradient></defs><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="url(#heroGradient)" stroke-width="24" stroke-linecap="round" opacity=".42"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#3675ff" stroke-width="12" opacity=".44"/><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="#93eaff" stroke-width="2" opacity=".65"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#72a8ff" stroke-width="2" opacity=".8"/></svg></div>
+    <div class="create-sound-grid" id="createSoundGrid" role="group" aria-label="Select sounds to mix"></div>
+    <p class="create-no-results" id="createNoResults" hidden>No sounds matched. Try another search.</p>
+  </div>
+  <div class="create-footer">
+    <div class="mode-switch" role="group" aria-label="Session mode">
+      <button class="mode-option" id="createModeFocus" type="button" aria-pressed="false">Focus</button>
+      <button class="mode-option active" id="createModeRelax" type="button" aria-pressed="true">Relax</button>
+    </div>
+    <p id="createSelectedCount" class="selected-count" aria-live="polite">3 sounds selected</p>
+    <button id="startCreateBtn" class="cta-button create-start-btn" type="button">Start Session</button>
+  </div>
+</div>
         <div class="screen" id="screen-mode">
           <div class="top-nav">
             <div class="back-btn" id="modeBackBtn">
@@ -135,10 +123,6 @@
           <button class="cta-button disabled" id="modeStartBtn">Start</button>
         </div>
 
-
-        <!-- ==============================================
-             SCREEN 3: QUICK START / CHOOSE MY SOUNDS (Sound Selection Screen 2)
-             ============================================== -->
         <div class="screen" id="screen-entry-type">
           <div class="top-nav">
             <div class="back-btn" id="entryTypeBackBtn">
@@ -178,10 +162,6 @@
           <button class="cta-button disabled" id="entryTypeStartBtn">Start</button>
         </div>
 
-
-        <!-- ==============================================
-             SCREEN 4: DYNAMIC SOUND SELECTION (Sound Selection Screen 3a & 3b)
-             ============================================== -->
         <div class="screen" id="screen-sound-selection">
           <div class="top-nav">
             <div class="back-btn" id="soundSelectBackBtn">
@@ -200,10 +180,6 @@
           <button class="cta-button disabled" id="soundSelectStartBtn">Start</button>
         </div>
 
-
-        <!-- ==============================================
-             SCREEN 5: LISTENING SESSION
-             ============================================== -->
         <div class="screen" id="screen-listening">
           <div style="width: 100%;">
             <div class="top-nav">
@@ -213,12 +189,13 @@
               <div class="brand-logo">att<span class="brand-u">u</span>ne</div>
             </div>
 
+            <button type="button" id="saveSoundscapeBtn" class="favorite-btn" aria-label="Save this soundscape" aria-pressed="false" title="Save soundscape"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M20.4 5.5a5.4 5.4 0 0 0-7.7 0l-.7.7-.7-.7a5.4 5.4 0 0 0-7.7 7.7l8.4 8.2 8.4-8.2a5.4 5.4 0 0 0 0-7.7Z"/></svg></button>
             <div class="now-listening-label">NOW LISTENING</div>
             <h1 class="now-listening-title" id="nowListeningTitle">Deep Focus</h1>
           </div>
 
           <div class="listening-wave-wrapper" id="listeningWaveWrap">
-            <div class="ambient-glow"></div>
+            <div class="ambient-glow"></div><div class="listening-orb" aria-hidden="true"></div>
             <svg viewBox="0 0 380 150" fill="none" style="position: relative; z-index: 2;">
               <defs>
                 <linearGradient id="listeningWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -244,14 +221,14 @@
             </div>
 
             <div class="listening-control-bar">
-              <div class="control-side-btn" id="openTimerBtn" title="Set Session Timer">
+              <div class="control-side-btn" id="openTimerBtn" title="Set Session Timer" role="button" tabindex="0" aria-label="Set session timer">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
               </div>
 
-              <div class="play-pause-circle" id="masterPlayPauseBtn" title="Play / Pause">
+              <div class="play-pause-circle" id="masterPlayPauseBtn" title="Play / Pause" role="button" tabindex="0" aria-label="Pause soundscape">
                 <svg id="pauseIconSvg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
                   <rect x="14" y="4" width="4" height="16" rx="1.5"></rect>
@@ -261,7 +238,7 @@
                 </svg>
               </div>
 
-              <div class="control-side-btn" id="mixerBtn" title="Sound Mixer">
+              <div class="control-side-btn" id="mixerBtn" title="Sound Mixer" role="button" tabindex="0" aria-label="Open sound mixer">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="4" y1="21" x2="4" y2="14"></line>
                   <line x1="4" y1="10" x2="4" y2="3"></line>
@@ -298,8 +275,6 @@
     </div><!-- /.device-frame -->
   </div><!-- /.prototype-stage -->
 
-
-  <!-- DEVELOPER PROTOTYPE CONFIGURATION MODAL -->
   <div class="dev-modal-backdrop" id="devModalBackdrop">
     <div class="dev-panel">
       <h2>
