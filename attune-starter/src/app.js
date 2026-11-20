@@ -136,7 +136,29 @@
     function playAudioLayer(fileOrItem, isFrequency = false, mode = 'focus') {
       const ctx = getAudioContext();
 
-      if (fileOrItem && fileOrItem instanceof File) {
+      if (typeof fileOrItem === 'string') {
+        const audio = new Audio(fileOrItem);
+        audio.loop = true;
+        const source = ctx.createMediaElementSource(audio);
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 0.55;
+        source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        audio.play().catch(e => console.warn(e));
+
+        return {
+          stop: () => {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.removeAttribute('src');
+            audio.load();
+            source.disconnect();
+            gainNode.disconnect();
+          },
+          pause: () => audio.pause(),
+          resume: () => audio.play().catch(e => {})
+        };
+      } else if (fileOrItem && fileOrItem instanceof File) {
         // Uploaded MP3 file
         const audio = new Audio();
         const objectUrl = URL.createObjectURL(fileOrItem);
@@ -212,27 +234,61 @@
     /* =================================================================
        SCREEN 1 — HOME
        ================================================================= */
-    // Real, one-tap soundscapes on the home screen.
-    // These use the current synthesis fallback until licensed MP3 assets are bundled.
+    let DatasetManifest = {};
+
     const HomePresets = {
-      focus: { title: 'Deep Focus', mode: 'focus', types: ['wind', 'water', 'rain', 'drone'] },
-      relax: { title: 'Deep Relax', mode: 'relax', types: ['wind', 'water', 'rain'] },
-      rain: { title: 'Gentle Rain', mode: 'relax', types: ['rain'] },
-      wind: { title: 'Soft Wind', mode: 'relax', types: ['wind'] },
-      water: { title: 'Flowing Water', mode: 'relax', types: ['water'] },
-      storm: { title: 'Rain & Thunder', mode: 'relax', types: ['rain', 'thunder'] },
-      ambient: { title: 'Ambient Calm', mode: 'relax', types: ['drone', 'wind'] }
+      focus: { title: 'Deep Focus', mode: 'focus', scenes: ['Resonant Ladder', 'Twin Currents', 'Spectral Haze', 'Ivory Afterglow', 'Stone Vault'] },
+      relax: { title: 'Deep Relax', mode: 'relax', scenes: ['Distant Reverie', 'Inner Haven', 'Ivory Afterglow', 'Pelagic Drift'] },
+      rain: { title: 'Gentle Rain', mode: 'relax', scenes: ['Tempest Shelter', 'Cascading Veil', 'Ancient Canopy', 'Lantern Courtyard'] },
+      wind: { title: 'Soft Wind', mode: 'relax', scenes: ['Amber Footpath', 'Hollow Grove', 'Open Pasture', 'Lantern Courtyard'] },
+      water: { title: 'Flowing Water', mode: 'relax', scenes: ['Cascading Veil', 'Silver Tributary', 'Wetland Chorus', 'Open Pasture'] },
+      storm: { title: 'Rain & Thunder', mode: 'relax', scenes: ['Tempest Shelter', 'Atlantic Reach', 'Cascading Veil'] },
+      ambient: { title: 'Ambient Calm', mode: 'relax', scenes: ['Distant Reverie', 'Pelagic Drift', 'Spectral Haze', 'Inner Haven'] }
     };
+
+    function randomItem(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function shuffleItems(items) {
+      const shuffled = [...items];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function getRandomPresetFiles(preset) {
+      return shuffleItems(preset.scenes).slice(0, 3).map(scene => {
+        const sceneFiles = DatasetManifest[scene] || [];
+        if (sceneFiles.length === 0) return null;
+        return `/${encodeURIComponent(scene)}/mp3/${encodeURIComponent(randomItem(sceneFiles))}`;
+      }).filter(Boolean);
+    }
+
+    async function loadDatasetManifest() {
+      try {
+        const response = await fetch('/audio-dataset-manifest.json');
+        if (!response.ok) throw new Error(`Manifest request failed: ${response.status}`);
+        DatasetManifest = await response.json();
+      } catch (error) {
+        console.error('Could not load the audio dataset manifest.', error);
+        DatasetManifest = {};
+      }
+    }
 
     document.querySelectorAll('.home-preset').forEach(button => {
       button.addEventListener('click', () => {
         const preset = HomePresets[button.dataset.preset];
         if (!preset) return;
+
         State.selectedMode = preset.mode;
         State.returnScreen = 'screen-home';
         initListeningScreen(preset.title, preset.mode);
-        preset.types.forEach(type => {
-          State.activeAudioLayers.push(playAudioLayer({ synthType: type }));
+
+        getRandomPresetFiles(preset).forEach(url => {
+          State.activeAudioLayers.push(playAudioLayer(url, false));
         });
       });
     });
@@ -249,10 +305,11 @@
       });
     });
 
-    // Keep the original bottom navigation buttons functional for now.
     document.querySelectorAll('.hex-trigger').forEach(button => {
       button.addEventListener('click', () => navigateTo('screen-mode'));
     });
+
+    loadDatasetManifest();
 
     /* =================================================================
        SCREEN 2 — FOCUS / RELAX
