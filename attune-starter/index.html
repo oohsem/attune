@@ -47,15 +47,7 @@
 
           <!-- Existing SoundSpace -->
           <div class="section-title suggested-soundscapes-title">Suggested Soundscapes</div>
-          <div class="hex-cluster">
-            <button type="button" class="hex-card hex-1 home-preset" data-preset="focus" aria-label="Play Focus soundscape"><span>Focus</span></button>
-            <button type="button" class="hex-card hex-2 home-preset" data-preset="relax" aria-label="Play Relax soundscape"><span>Relax</span></button>
-            <button type="button" class="hex-card hex-3 home-preset" data-preset="rain" aria-label="Play Rain soundscape"><span>Rain</span></button>
-            <button type="button" class="hex-card hex-4 home-preset" data-preset="wind" aria-label="Play Wind soundscape"><span>Wind</span></button>
-            <button type="button" class="hex-card hex-5 home-preset" data-preset="water" aria-label="Play Water soundscape"><span>Water</span></button>
-            <button type="button" class="hex-card hex-6 home-preset" data-preset="storm" aria-label="Play Storm soundscape"><span>Storm</span></button>
-            <button type="button" class="hex-card hex-7 home-preset" data-preset="ambient" aria-label="Play Ambient soundscape"><span>Ambient</span></button>
-          </div>
+          <div class="hex-cluster" id="homeSoundscapeHexes"></div>
 
           <!-- Bottom Navbar -->
           <div class="bottom-navbar">
@@ -68,13 +60,12 @@
                 </svg>
               </div>
             </div>
-            <div class="nav-item hex-trigger">
+            <button type="button" class="nav-item create-soundscape-trigger" aria-label="Create a new soundscape" title="Create a new soundscape">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="m19 11-8-8-8.5 8.5a2.12 2.12 0 1 0 3 3L14 6l5 5Z"/>
-                <path d="m18 13 4 4"/>
-                <path d="m14 17 4 4"/>
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-            </div>
+            </button>
             <div class="nav-item hex-trigger">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <line x1="12" y1="3" x2="12" y2="21"/>
@@ -183,13 +174,14 @@
           </div>
 
           <div class="sub-tagline">Build your Soundscape</div>
-          <h2 class="page-title">How would you like to start?</h2>
+          <h2 class="page-title">Choose sound groups</h2>
+          <p class="sound-selection-hint">Pick groups. We'll choose 2-4 scenes from each.</p>
 
           <div class="sound-categories-list" id="soundCategoriesAccordion">
-            <!-- Dynamically populated from uploaded folders -->
+            <!-- Dynamically populated from the audio dataset -->
           </div>
 
-          <button class="cta-button disabled" id="soundSelectStartBtn">Start</button>
+          <button class="cta-button disabled" id="saveSoundscapeBtn" disabled>Save Soundscape</button>
         </div>
 
 

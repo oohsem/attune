@@ -5,7 +5,7 @@
       currentScreen: 'screen-home',
       selectedMode: null, // 'focus' | 'relax'
       entryType: null,    // 'quick' | 'custom'
-      selectedSoundObjects: new Map(), // id -> sound item
+      selectedSoundGroupIds: new Set(),
       activeAudioLayers: [],
       isPlaying: false,
       timerSeconds: 0,
@@ -236,6 +236,37 @@
        ================================================================= */
     let DatasetManifest = {};
 
+    const SoundGroups = [
+      {
+        id: 'nature',
+        name: 'Nature & Wildlife',
+        scenes: ['Amber Footpath', 'Ancient Canopy', 'Hollow Grove', 'Lantern Courtyard', 'Open Pasture', 'Twilight Chorus', 'Wetland Chorus']
+      },
+      {
+        id: 'water',
+        name: 'Water & Coast',
+        scenes: ['Atlantic Reach', 'Cascading Veil', 'Coastal Crossroads', 'Silver Tributary']
+      },
+      {
+        id: 'weather',
+        name: 'Rain & Storm',
+        scenes: ['Tempest Shelter', 'Amber Footpath', 'Ancient Canopy', 'Atlantic Reach']
+      },
+      {
+        id: 'ambient',
+        name: 'Ambient Worlds',
+        scenes: ['Distant Reverie', 'Inner Haven', 'Pelagic Drift', 'Stone Vault']
+      },
+      {
+        id: 'tones',
+        name: 'Focus & Tones',
+        scenes: ['Ivory Afterglow', 'Resonant Ladder', 'Spectral Haze', 'Twin Currents']
+      }
+    ];
+    const SavedSoundscapesStorageKey = 'attune.savedSoundscapes';
+    const validSoundGroupIds = new Set(SoundGroups.map(group => group.id));
+    let SavedSoundscapes = [];
+
     const HomePresets = {
       focus: { title: 'Deep Focus', mode: 'focus', scenes: ['Resonant Ladder', 'Twin Currents', 'Spectral Haze', 'Ivory Afterglow', 'Stone Vault'] },
       relax: { title: 'Deep Relax', mode: 'relax', scenes: ['Distant Reverie', 'Inner Haven', 'Ivory Afterglow', 'Pelagic Drift'] },
@@ -267,6 +298,124 @@
       }).filter(Boolean);
     }
 
+    function loadSavedSoundscapes() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SavedSoundscapesStorageKey) || '[]');
+        if (!Array.isArray(saved)) return [];
+        return saved.filter(item =>
+          item &&
+          typeof item.id === 'string' &&
+          Array.isArray(item.groupIds) &&
+          item.groupIds.some(id => validSoundGroupIds.has(id))
+        ).map(item => {
+          const groupIds = item.groupIds.filter(id => validSoundGroupIds.has(id));
+          const validScenes = Array.isArray(item.scenes)
+            ? item.scenes.filter(scene => SoundGroups.some(group => group.scenes.includes(scene)))
+            : [];
+          const scenes = validScenes.length > 0 ? validScenes : getRandomScenesForGroups(groupIds);
+          return {
+            ...item,
+            name: typeof item.name === 'string' ? item.name : generateSceneBasedName(scenes),
+            groupIds,
+            scenes
+          };
+        }).filter(item => item.scenes.length > 0);
+      } catch (error) {
+        console.error('Could not load saved soundscapes.', error);
+        return [];
+      }
+    }
+
+    function getRandomScenesForGroups(groupIds) {
+      const selectedScenes = new Set();
+      groupIds.forEach(groupId => {
+        const group = SoundGroups.find(item => item.id === groupId);
+        if (!group) return;
+
+        const availableScenes = group.scenes.filter(scene => (DatasetManifest[scene] || []).length > 0);
+        if (availableScenes.length === 0) return;
+
+        const sceneCount = Math.min(availableScenes.length, Math.floor(Math.random() * 3) + 2);
+        shuffleItems(availableScenes).slice(0, sceneCount).forEach(scene => selectedScenes.add(scene));
+      });
+      return [...selectedScenes];
+    }
+
+    function generateSceneBasedName(scenes) {
+      const sceneWords = shuffleItems(scenes)
+        .map(scene => scene.split(/\s+/).at(-1))
+        .filter((word, index, words) => words.indexOf(word) === index);
+      if (sceneWords.length === 0) return 'New Soundscape';
+      if (sceneWords.length === 1) return `${sceneWords[0]} Mix`;
+      return `${sceneWords[0]} & ${sceneWords[1]}`;
+    }
+
+    function getRandomSceneFiles(scenes) {
+      return scenes.map(scene => {
+        const sceneFiles = DatasetManifest[scene] || [];
+        if (sceneFiles.length === 0) return null;
+        const fileName = randomItem(sceneFiles);
+        return `/${encodeURIComponent(scene)}/mp3/${encodeURIComponent(fileName)}`;
+      }).filter(Boolean);
+    }
+
+    function playSoundscape(title, mode, files) {
+      State.selectedMode = mode;
+      State.returnScreen = 'screen-home';
+      initListeningScreen(title, mode);
+      files.forEach(url => State.activeAudioLayers.push(playAudioLayer(url, false)));
+    }
+
+    function renderHomeSoundscapes() {
+      const container = document.getElementById('homeSoundscapeHexes');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const tiles = [
+        ...Object.entries(HomePresets).map(([id, preset]) => ({ id, ...preset, type: 'preset' })),
+        ...SavedSoundscapes.map(soundscape => ({
+          ...soundscape,
+          id: soundscape.id,
+          title: soundscape.name,
+          type: 'saved'
+        }))
+      ];
+
+      let tileIndex = 0;
+      let row = 0;
+      while (tileIndex < tiles.length) {
+        const positions = row % 2 === 0 ? [41, 123] : [0, 82, 164];
+        const rowCount = Math.min(positions.length, tiles.length - tileIndex);
+        for (let column = 0; column < rowCount; column++) {
+          const tile = tiles[tileIndex];
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `hex-card ${tile.type === 'saved' ? 'saved-soundscape-hex' : 'home-preset'}`;
+          button.setAttribute('aria-label', `Play ${tile.title} soundscape`);
+          button.title = tile.title;
+          button.style.left = `${positions[column]}px`;
+          button.style.top = `${row * 70.5}px`;
+
+          const label = document.createElement('span');
+          label.textContent = tile.title;
+          button.appendChild(label);
+
+          button.addEventListener('click', () => {
+            if (tile.type === 'saved') {
+              playSoundscape(tile.title, tile.mode || 'relax', getRandomSceneFiles(tile.scenes));
+            } else {
+              playSoundscape(tile.title, tile.mode, getRandomPresetFiles(tile));
+            }
+          });
+          container.appendChild(button);
+          tileIndex++;
+        }
+        row++;
+      }
+
+      container.style.height = `${Math.max(235, (row - 1) * 70.5 + 94)}px`;
+    }
+
     async function loadDatasetManifest() {
       try {
         const response = await fetch('/audio-dataset-manifest.json');
@@ -276,38 +425,16 @@
         console.error('Could not load the audio dataset manifest.', error);
         DatasetManifest = {};
       }
+      SavedSoundscapes = loadSavedSoundscapes();
+      renderHomeSoundscapes();
+      if (State.currentScreen === 'screen-sound-selection') renderSoundSelectionUI();
     }
-
-    document.querySelectorAll('.home-preset').forEach(button => {
-      button.addEventListener('click', () => {
-        const preset = HomePresets[button.dataset.preset];
-        if (!preset) return;
-
-        State.selectedMode = preset.mode;
-        State.returnScreen = 'screen-home';
-        initListeningScreen(preset.title, preset.mode);
-
-        getRandomPresetFiles(preset).forEach(url => {
-          State.activeAudioLayers.push(playAudioLayer(url, false));
-        });
-      });
-    });
-
-    document.querySelectorAll('.home-create').forEach(button => {
-      button.addEventListener('click', () => {
-        const choice = button.dataset.create;
-        if (choice === 'focus' || choice === 'relax') {
-          selectMode(choice);
-          navigateTo('screen-entry-type');
-        } else {
-          navigateTo('screen-mode');
-        }
-      });
-    });
 
     document.querySelectorAll('.hex-trigger').forEach(button => {
       button.addEventListener('click', () => navigateTo('screen-mode'));
     });
+
+    document.querySelector('.create-soundscape-trigger').addEventListener('click', openSoundscapeBuilder);
 
     loadDatasetManifest();
 
@@ -372,14 +499,12 @@
        SCREEN 4 — DYNAMIC SOUND SELECTION
        ================================================================= */
     const categoriesAccordionEl = document.getElementById('soundCategoriesAccordion');
-    const soundSelectStartBtn = document.getElementById('soundSelectStartBtn');
+    const saveSoundscapeBtn = document.getElementById('saveSoundscapeBtn');
 
-    function updateSoundSelectionStartButton() {
-      if (State.selectedSoundObjects.size > 0) {
-        soundSelectStartBtn.classList.remove('disabled');
-      } else {
-        soundSelectStartBtn.classList.add('disabled');
-      }
+    function updateSaveSoundscapeButton() {
+      const canSave = State.selectedSoundGroupIds.size > 0;
+      saveSoundscapeBtn.disabled = !canSave;
+      saveSoundscapeBtn.classList.toggle('disabled', !canSave);
     }
 
     function escapeHTML(value) {
@@ -390,79 +515,48 @@
 
     function renderSoundSelectionUI() {
       categoriesAccordionEl.innerHTML = '';
+      const availableGroups = SoundGroups.map(group => ({
+        ...group,
+        availableScenes: group.scenes.filter(scene => (DatasetManifest[scene] || []).length > 0)
+      })).filter(group => group.availableScenes.length > 0);
 
-      AudioDataset.categories.forEach((cat, index) => {
-        const card = document.createElement('div');
-        card.className = 'accordion-card' + (index === 0 ? ' expanded' : '');
+      if (availableGroups.length === 0) {
+        categoriesAccordionEl.innerHTML = '<p class="sound-groups-empty">The audio dataset could not be loaded.</p>';
+        updateSaveSoundscapeButton();
+        return;
+      }
 
+      availableGroups.forEach(group => {
+        const card = document.createElement('label');
+        card.className = 'sound-group-card';
         card.innerHTML = `
-          <div class="accordion-header">
-            <div class="header-left">
-              <div class="category-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-8"/><path d="M5 8c0 4 7 6 7 6s7-2 7-6a7 7 0 0 0-14 0Z"/></svg>
-              </div>
-              <div class="cat-name">${escapeHTML(cat.name)}</div>
-            </div>
-            <div class="chevron-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-          </div>
-          <div class="accordion-content"></div>
+          <input class="sound-group-checkbox" type="checkbox" value="${escapeHTML(group.id)}" ${State.selectedSoundGroupIds.has(group.id) ? 'checked' : ''}>
+          <span class="sound-group-checkmark" aria-hidden="true"></span>
+          <span class="sound-group-name">${escapeHTML(group.name)}</span>
         `;
 
-        const contentEl = card.querySelector('.accordion-content');
-
-        cat.sounds.forEach(sound => {
-          const isSelected = State.selectedSoundObjects.has(sound.id);
-          const row = document.createElement('div');
-          row.className = 'sound-item-row';
-          row.innerHTML = `
-            <div class="sound-row-left" data-sound-id="${escapeHTML(sound.id)}">
-              <div class="checkbox-bubble ${isSelected ? 'checked' : ''}">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#041221" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </div>
-              <span class="sound-label">${escapeHTML(sound.name)}</span>
-            </div>
-            <button class="preview-play-btn" data-preview-id="${escapeHTML(sound.id)}" title="Preview Sound">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-            </button>
-          `;
-
-          // Checkbox toggle
-          const rowLeft = row.querySelector('.sound-row-left');
-          rowLeft.addEventListener('click', () => {
-            const bubble = rowLeft.querySelector('.checkbox-bubble');
-            if (State.selectedSoundObjects.has(sound.id)) {
-              State.selectedSoundObjects.delete(sound.id);
-              bubble.classList.remove('checked');
-            } else {
-              State.selectedSoundObjects.set(sound.id, sound);
-              bubble.classList.add('checked');
-            }
-            updateSoundSelectionStartButton();
-          });
-
-          // Preview toggle
-          const previewBtn = row.querySelector('.preview-play-btn');
-          previewBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            togglePreview(sound, previewBtn);
-          });
-
-          contentEl.appendChild(row);
+        const checkbox = card.querySelector('.sound-group-checkbox');
+        card.classList.toggle('selected', checkbox.checked);
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            State.selectedSoundGroupIds.add(group.id);
+          } else {
+            State.selectedSoundGroupIds.delete(group.id);
+          }
+          card.classList.toggle('selected', checkbox.checked);
+          updateSaveSoundscapeButton();
         });
-
-        // Toggle Accordion expansion
-        card.querySelector('.accordion-header').addEventListener('click', () => {
-          card.classList.toggle('expanded');
-        });
-
         categoriesAccordionEl.appendChild(card);
       });
 
-      updateSoundSelectionStartButton();
+      updateSaveSoundscapeButton();
+    }
+
+    function openSoundscapeBuilder() {
+      State.selectedMode = 'relax';
+      State.selectedSoundGroupIds.clear();
+      renderSoundSelectionUI();
+      navigateTo('screen-sound-selection');
     }
 
     // Audio Preview
@@ -497,13 +591,40 @@
 
     document.getElementById('soundSelectBackBtn').addEventListener('click', () => {
       stopPreview();
-      navigateTo('screen-entry-type');
+      navigateTo('screen-home');
     });
 
-    soundSelectStartBtn.addEventListener('click', () => {
-      if (State.selectedSoundObjects.size === 0) return;
-      stopPreview();
-      startCustomSoundscape();
+    saveSoundscapeBtn.addEventListener('click', () => {
+      const groupIds = [...State.selectedSoundGroupIds];
+      if (groupIds.length === 0) return;
+      const scenes = getRandomScenesForGroups(groupIds);
+      if (scenes.length === 0) {
+        showToast('No audio scenes found for that selection.');
+        return;
+      }
+
+      const soundscape = {
+        id: crypto.randomUUID(),
+        name: generateSceneBasedName(scenes),
+        groupIds,
+        scenes,
+        mode: State.selectedMode || 'relax'
+      };
+      const updatedSoundscapes = [...SavedSoundscapes, soundscape];
+      try {
+        localStorage.setItem(SavedSoundscapesStorageKey, JSON.stringify(updatedSoundscapes));
+      } catch (error) {
+        console.error('Could not save this soundscape.', error);
+        showToast('Could not save soundscape.');
+        return;
+      }
+
+      SavedSoundscapes = updatedSoundscapes;
+      renderHomeSoundscapes();
+      State.selectedSoundGroupIds.clear();
+      updateSaveSoundscapeButton();
+      navigateTo('screen-home');
+      showToast(`${soundscape.name} saved to Home.`);
     });
 
     /* =================================================================
@@ -555,19 +676,6 @@
           State.activeAudioLayers.push(layer);
         });
       }
-    }
-
-    // Choose My Sounds Flow: All selected sounds + Focus/Relax frequency
-    function startCustomSoundscape() {
-      State.returnScreen = 'screen-sound-selection';
-      const mode = State.selectedMode || 'focus';
-      const title = mode === 'focus' ? 'Focus Soundscape' : 'Relax Soundscape';
-      initListeningScreen(title, mode);
-
-      State.selectedSoundObjects.forEach(soundItem => {
-        const layer = playAudioLayer(soundItem.file || soundItem, false);
-        State.activeAudioLayers.push(layer);
-      });
     }
 
     // Player Controls
@@ -728,7 +836,7 @@
         });
 
         // Reset previous selections to avoid stale IDs
-        State.selectedSoundObjects.clear();
+        State.selectedSoundGroupIds.clear();
         document.getElementById('datasetStatus').textContent = `Loaded (${sceneMap.size} scenes)`;
       }
     });
