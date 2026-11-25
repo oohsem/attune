@@ -1,5 +1,6 @@
 import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
 import { setupSpatialMixer } from './spatial-mixer.js';
+import { SOUND_GROUPS, generateThemeMix } from './soundscape-generator.js';
 
 
        //GLOBAL STATE & AUDIO ENGINE
@@ -860,6 +861,31 @@ import { setupSpatialMixer } from './spatial-mixer.js';
     }));
     const allCreateSounds = [...DEFAULT_CREATE_SOUNDS, ...librarySounds];
     const createSoundById = new Map(allCreateSounds.map(sound => [sound.id, sound]));
+
+    // Generate four real recordings from one of the five themed collection groups.
+    // This leaves the existing nine-tile custom selection and mixer untouched.
+    const quickMixTheme = document.getElementById('quickMixTheme');
+    const quickMixBtn = document.getElementById('quickMixBtn');
+    quickMixBtn.addEventListener('click', () => {
+      const group = SOUND_GROUPS.find(item => item.id === quickMixTheme.value);
+      const tracks = generateThemeMix(quickMixTheme.value, AUDIO_CATALOG);
+      if (!tracks.length) {
+        showToast('No recordings found for this theme.');
+        return;
+      }
+      State.selectedMode = createMode;
+      State.currentPreset = null;
+      State.returnScreen = 'screen-create';
+      State.currentSessionSounds = tracks.map(track => ({
+        name: track.name,
+        audioId: track.id,
+        synthType: 'drone',
+        volume: 0.5
+      }));
+      initListeningScreen(`${group.name} Mix`, createMode);
+      tracks.forEach(track => State.activeAudioLayers.push(playAudioLayer({ audioId: track.id })));
+      syncFavoriteButton();
+    });
 
     const createSearchInput = document.getElementById('createSearch');
     const createSoundGrid = document.getElementById('createSoundGrid');

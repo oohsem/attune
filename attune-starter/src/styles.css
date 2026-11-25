@@ -1226,3 +1226,50 @@ button:focus-visible, input:focus-visible { outline: 2px solid #7bceff; outline-
   }
 }
 
+
+/* Quick Generate: optional themed mixes built from the existing 400-track catalog */
+#screen-create .quick-mix-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0 0;
+  min-height: 36px;
+}
+#screen-create .quick-mix-theme-label {
+  font-size: 11px;
+  color: #c5e7fd;
+  font-weight: 700;
+}
+#screen-create #quickMixTheme {
+  min-width: 0;
+  flex: 1;
+  height: 36px;
+  border-radius: 11px;
+  background: #111e33;
+  border: 1px solid rgba(103, 186, 255, .35);
+  color: #e7f8ff;
+  font-size: 11px;
+  padding: 0 7px;
+}
+#screen-create .quick-mix-btn {
+  flex: 0 0 auto;
+  height: 36px;
+  border-radius: 11px;
+  border: 1px solid rgba(90, 200, 246, .55);
+  background: rgba(35, 119, 192, .28);
+  color: #dbf5ff;
+  font-weight: 750;
+  font-size: 11px;
+  padding: 0 9px;
+  cursor: pointer;
+}
+#screen-create .quick-mix-btn:hover,
+#screen-create .quick-mix-btn:focus-visible {
+  background: rgba(49, 141, 211, .5);
+  outline-color: #54baff;
+}
+@media (max-width: 355px) {
+  #screen-create .quick-mix-theme-label { display: none; }
+  #screen-create #quickMixTheme { font-size: 10px; }
+  #screen-create .quick-mix-btn { font-size: 10px; padding: 0 6px; }
+}

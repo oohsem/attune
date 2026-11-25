@@ -27,7 +27,7 @@
       <div class="screen-container">
 
 
-             //SCREEN 1: HOME (DEFAULT ROOT SCREEN)
+        <!-- SCREEN 1: HOME (DEFAULT ROOT SCREEN) -->
 
         <div class="screen active" id="screen-home">
   <header class="home-top"><span class="home-top-spacer"></span><span class="brand-logo">att<span class="brand-u">u</span>ne</span></header>
@@ -76,6 +76,17 @@
     <svg viewBox="0 0 24 24" width="19" height="19" stroke="currentColor" stroke-width="2.2" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>
     <input type="search" id="createSearch" placeholder='e.g., “Rain”, “Fire Crackling”, etc.' aria-label="Search sounds" autocomplete="off"/>
   </label>
+  <div class="quick-mix-row" role="group" aria-label="Generate a soundscape from a theme">
+    <label class="quick-mix-theme-label" for="quickMixTheme">Theme</label>
+    <select id="quickMixTheme" aria-label="Soundscape theme">
+      <option value="nature">Nature &amp; Wildlife</option>
+      <option value="water">Water &amp; Coast</option>
+      <option value="weather">Rain &amp; Storm</option>
+      <option value="ambient">Ambient Worlds</option>
+      <option value="tones">Focus &amp; Tones</option>
+    </select>
+    <button id="quickMixBtn" class="quick-mix-btn" type="button">Surprise me ✨</button>
+  </div>
   <div class="sound-grid-head"><h2>Popular sounds</h2><button type="button" id="showMoreSoundsBtn">See more <span aria-hidden="true">→</span></button></div>
   <div class="create-sounds-area">
     <div class="create-grid-wave" aria-hidden="true"><svg class="hero-wave" viewBox="0 0 380 118" aria-hidden="true" preserveAspectRatio="none"><defs><linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2851db" stop-opacity=".15"/><stop offset=".3" stop-color="#53b7ff" stop-opacity=".85"/><stop offset=".65" stop-color="#80e6ff" stop-opacity=".65"/><stop offset="1" stop-color="#4266e9" stop-opacity=".24"/></linearGradient></defs><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="url(#heroGradient)" stroke-width="24" stroke-linecap="round" opacity=".42"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#3675ff" stroke-width="12" opacity=".44"/><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="#93eaff" stroke-width="2" opacity=".65"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#72a8ff" stroke-width="2" opacity=".8"/></svg></div>
@@ -93,7 +104,7 @@
 </div>
 
 
-             //SCREEN 2: FOCUS / RELAX (Sound Selection Screen 1)
+        <!-- SCREEN 2: FOCUS / RELAX (Sound Selection Screen 1) -->
 
         <div class="screen" id="screen-mode">
           <div class="top-nav">
@@ -135,7 +146,7 @@
 
 
 
-             //SCREEN 3: QUICK START / CHOOSE MY SOUNDS (Sound Selection Screen 2)
+       <!-- SCREEN 3: QUICK START / CHOOSE MY SOUNDS (Sound Selection Screen 2) -->
 
         <div class="screen" id="screen-entry-type">
           <div class="top-nav">
@@ -178,7 +189,7 @@
 
 
 
-             //SCREEN 4: DYNAMIC SOUND SELECTION (Sound Selection Screen 3a & 3b)
+        <!-- SCREEN 4: DYNAMIC SOUND SELECTION (Sound Selection Screen 3a & 3b) -->
 
         <div class="screen" id="screen-sound-selection">
           <div class="top-nav">
@@ -200,7 +211,7 @@
 
 
 
-             //SCREEN 5: LISTENING SESSION
+        <!-- SCREEN 5: LISTENING SESSION -->
 
         <div class="screen" id="screen-listening">
           <div style="width: 100%;">
