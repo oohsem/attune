@@ -1,4 +1,8 @@
 import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
+import { setupSpatialMixer } from './spatial-mixer.js';
+
+
+       //GLOBAL STATE & AUDIO ENGINE
 
     const State = {
       currentScreen: 'screen-home',
@@ -16,6 +20,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       currentSessionSounds: [],
       createExpanded: false,
     };
+    let spatialMixer = null;
 
     // Default Sample Dataset (Replaces immediately when uploaded)
     const AudioDataset = {
@@ -162,7 +167,8 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       const source = ctx.createMediaElementSource(audio);
       const gain = ctx.createGain();
       // Conservative starting level: multiple recordings will be mixed.
-      gain.gain.value = 0.25;
+      let normalizedVolume = 0.5;
+      gain.gain.value = normalizedVolume * 0.5;
       source.connect(gain);
       gain.connect(ctx.destination);
 
@@ -191,9 +197,10 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
         resume: () => audio.play().catch(error => console.warn(error)),
         setVolume: value => {
           const level = Math.max(0, Math.min(1, Number(value) || 0));
-          gain.gain.setTargetAtTime(level, ctx.currentTime, 0.03);
+          normalizedVolume = level;
+          gain.gain.setTargetAtTime(level * 0.5, ctx.currentTime, 0.03);
         },
-        getVolume: () => gain.gain.value
+        getVolume: () => normalizedVolume
       };
     }
 
@@ -215,7 +222,8 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
         audio.loop = true;
         const source = ctx.createMediaElementSource(audio);
         const gainNode = ctx.createGain();
-        gainNode.gain.value = isFrequency ? 0.35 : 0.65;
+        let normalizedVolume = isFrequency ? 0.35 : 0.65;
+        gainNode.gain.value = normalizedVolume;
         source.connect(gainNode);
         gainNode.connect(ctx.destination);
         audio.play().catch(e => console.warn(e));
@@ -231,7 +239,12 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
             gainNode.disconnect();
           },
           pause: () => audio.pause(),
-          resume: () => audio.play().catch(e => {})
+          resume: () => audio.play().catch(e => {}),
+          setVolume: value => {
+            normalizedVolume = Math.max(0, Math.min(1, Number(value) || 0));
+            gainNode.gain.setTargetAtTime(normalizedVolume, ctx.currentTime, 0.03);
+          },
+          getVolume: () => normalizedVolume
         };
       } else if (fileOrItem && fileOrItem.file instanceof File) {
         // Sound object with real file
@@ -250,19 +263,26 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
           const synth = createSynthLayer(ctx, (fileOrItem && fileOrItem.synthType) || 'rain');
           synth.gain.connect(ctx.destination);
           const startingVolume = synth.gain.gain.value;
+          let normalizedVolume = 0.5;
+          let paused = false;
           return {
             stop: () => { try { synth.source.stop(); } catch(e){} synth.gain.disconnect(); },
-            pause: () => { synth.gain.gain.value = 0; },
-            resume: () => { synth.gain.gain.value = startingVolume; }
+            pause: () => { paused = true; synth.gain.gain.value = 0; },
+            resume: () => { paused = false; synth.gain.gain.value = startingVolume * normalizedVolume * 2; },
+            setVolume: value => {
+              normalizedVolume = Math.max(0, Math.min(1, Number(value) || 0));
+              if (!paused) synth.gain.gain.setTargetAtTime(startingVolume * normalizedVolume * 2, ctx.currentTime, 0.03);
+            },
+            getVolume: () => normalizedVolume
           };
         }
       }
     }
 
 
-    /* =================================================================
-       ROUTING & NAVIGATION
-       ================================================================= */
+
+    //ROUTING & NAVIGATION
+
     function navigateTo(screenId) {
       stopPreview();
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -279,6 +299,9 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       t.classList.add('visible');
       setTimeout(() => t.classList.remove('visible'), 2400);
     }
+
+
+      // SCREEN 1 — HOME
 
     // Real, one-tap soundscapes on the home screen.
     // These use the current synthesis fallback until licensed MP3 assets are bundled.
@@ -305,7 +328,11 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
         State.currentPreset = null;
         State.currentSessionSounds = saved.sounds;
         initListeningScreen(saved.title, saved.mode);
-        saved.sounds.forEach(sound => State.activeAudioLayers.push(playAudioLayer(sound)));
+        saved.sounds.forEach(sound => {
+          const layer = playAudioLayer(sound);
+          if (Number.isFinite(sound.volume)) layer.setVolume?.(sound.volume);
+          State.activeAudioLayers.push(layer);
+        });
         syncFavoriteButton();
         return;
       }
@@ -337,6 +364,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       button.addEventListener('click', () => navigateTo('screen-mode'));
     });
 
+       //SCREEN 2 — FOCUS / RELAX
 
     const focusCard = document.getElementById('focusModeCard');
     const relaxCard = document.getElementById('relaxModeCard');
@@ -361,6 +389,8 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       navigateTo('screen-entry-type');
     });
 
+
+       //SCREEN 3 — QUICK START / CHOOSE MY SOUNDS
 
     const quickStartCard = document.getElementById('quickStartChoiceCard');
     const customSoundsCard = document.getElementById('customSoundsChoiceCard');
@@ -390,6 +420,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       }
     });
 
+       //SCREEN 4 — DYNAMIC SOUND SELECTION
     const categoriesAccordionEl = document.getElementById('soundCategoriesAccordion');
     const soundSelectStartBtn = document.getElementById('soundSelectStartBtn');
 
@@ -525,6 +556,8 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       startCustomSoundscape();
     });
 
+
+       //SCREEN 5 — LISTENING SESSION
     function stopAllActiveAudio() {
       State.activeAudioLayers.forEach(l => l.stop());
       State.activeAudioLayers = [];
@@ -546,6 +579,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       // 1. Add Focus OR Relax Frequency Layer
       const freqFile = mode === 'focus' ? AudioDataset.focusFrequencyFile : AudioDataset.relaxFrequencyFile;
       const freqLayer = playAudioLayer(freqFile, true, mode);
+      freqLayer.isFrequency = true; // keep the baseline tone out of the user mixer
       State.activeAudioLayers.push(freqLayer);
 
       State.isPlaying = true;
@@ -613,6 +647,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
         listeningStateLabel.textContent = 'Paused';
         listeningWaveWrap.classList.add('paused');
       }
+      spatialMixer?.syncPlayback();
     }
 
     masterPlayPauseBtn.addEventListener('click', () => {
@@ -632,10 +667,11 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       navigateTo(State.returnScreen || 'screen-home');
     });
 
-    document.getElementById('mixerBtn').addEventListener('click', () => {
-      showToast('Sound mixing coming soon.');
-    });
+    document.getElementById('mixerBtn').addEventListener('click', () => spatialMixer.open());
 
+    /* =================================================================
+       TIMER MODAL
+       ================================================================= */
     const timerModal = document.getElementById('timerModal');
     const openTimerBtn = document.getElementById('openTimerBtn');
     const closeTimerModalBtn = document.getElementById('closeTimerModalBtn');
@@ -686,6 +722,10 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       const s = State.timerSeconds % 60;
       timerBadge.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
+
+
+       //DEV CONFIGURATION PANEL
+
     const devModal = document.getElementById('devModalBackdrop');
     document.getElementById('openDevPanelBtn').addEventListener('click', () => devModal.classList.add('open'));
     document.getElementById('closeDevModalCross').addEventListener('click', () => devModal.classList.remove('open'));
@@ -769,6 +809,9 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
         document.getElementById('quickStartStatus').textContent = `${files.length}/5 Ready`;
       }
     });
+
+
+       //PHASE 2 — FIGMA HOME, CREATE, AND SAVED SOUNDSCAPES
 
     const DEFAULT_CREATE_SOUNDS = [
       { id: 'rain', name: 'Rain', synthType: 'rain', palette: 'rain', symbol: '☂' },
@@ -913,7 +956,9 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       } catch { return []; }
     }
     function sessionSignature(mode, sounds) {
-      return `${mode}:` + sounds.map(sound => sound.audioId || sound.synthType).sort().join(',');
+      return `${mode}:` + sounds.map(sound =>
+        `${sound.audioId || sound.synthType}:${(Number.isFinite(sound.volume) ? sound.volume : 0.5).toFixed(2)}`
+      ).sort().join(',');
     }
     function syncFavoriteButton() {
       const button = document.getElementById('saveSoundscapeBtn');
@@ -923,6 +968,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
       button.classList.toggle('saved', isSaved);
       button.setAttribute('aria-pressed', String(isSaved));
       button.setAttribute('aria-label', isSaved ? 'Remove saved soundscape' : 'Save this soundscape');
+      spatialMixer?.syncSaved();
     }
     document.getElementById('saveSoundscapeBtn').addEventListener('click', () => {
       const sounds = State.currentSessionSounds;
@@ -938,7 +984,7 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
           id: String(Date.now()),
           title: document.getElementById('nowListeningTitle').textContent,
           mode: State.selectedMode || 'relax',
-          sounds: sounds.map(({ name, synthType, audioId }) => ({ name, synthType, audioId }))
+          sounds: sounds.map(({ name, synthType, audioId, volume }) => ({ name, synthType, audioId, volume: Number.isFinite(volume) ? volume : 0.5 }))
         });
         showToast('Saved to your Soundscapes');
       }
@@ -995,6 +1041,32 @@ import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
           event.preventDefault(); element.click();
         }
       });
+    });
+
+    // Spatial mixer: frequency tone stays separate, all selected recordings get an orb.
+    spatialMixer = setupSpatialMixer({
+      getTracks: () => State.activeAudioLayers
+        .filter(layer => !layer.isFrequency)
+        .map((layer, index) => {
+          const sound = State.currentSessionSounds[index] || {};
+          const id = sound.audioId || sound.synthType || `layer-${index}`;
+          return {
+            id,
+            name: sound.name || layer.name || `Sound ${index + 1}`,
+            type: sound.synthType || (sound.name || '').toLowerCase(),
+            volume: Number.isFinite(sound.volume) ? sound.volume : (layer.getVolume?.() ?? 0.5),
+            setVolume: volume => {
+              layer.setVolume?.(volume);
+              sound.volume = volume;
+              syncFavoriteButton();
+            }
+          };
+        }),
+      navigateTo,
+      isPlaying: () => State.isPlaying,
+      togglePlayback: () => masterPlayPauseBtn.click(),
+      openTimer: () => openTimerBtn.click(),
+      toggleSave: () => document.getElementById('saveSoundscapeBtn').click()
     });
 
     // Boot: Ensure Home is active and ready

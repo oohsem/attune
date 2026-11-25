@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/src/styles.css">
+  <link rel="stylesheet" href="/src/spatial-mixer.css">
 </head>
 <body>
 
@@ -24,6 +25,10 @@
       <div class="toast-popup" id="toastNotification">Sound mixing coming soon.</div>
 
       <div class="screen-container">
+
+
+             //SCREEN 1: HOME (DEFAULT ROOT SCREEN)
+
         <div class="screen active" id="screen-home">
   <header class="home-top"><span class="home-top-spacer"></span><span class="brand-logo">att<span class="brand-u">u</span>ne</span></header>
   <div class="home-hero"><svg class="hero-wave" viewBox="0 0 380 118" aria-hidden="true" preserveAspectRatio="none"><defs><linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2851db" stop-opacity=".15"/><stop offset=".3" stop-color="#53b7ff" stop-opacity=".85"/><stop offset=".65" stop-color="#80e6ff" stop-opacity=".65"/><stop offset="1" stop-color="#4266e9" stop-opacity=".24"/></linearGradient></defs><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="url(#heroGradient)" stroke-width="24" stroke-linecap="round" opacity=".42"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#3675ff" stroke-width="12" opacity=".44"/><path d="M-15 56 C30 2 60 112 111 56 S191 3 234 56 327 106 395 53" fill="none" stroke="#93eaff" stroke-width="2" opacity=".65"/><path d="M-15 65 C40 111 60 7 122 65 S206 113 253 59 339 7 395 68" fill="none" stroke="#72a8ff" stroke-width="2" opacity=".8"/></svg></div>
@@ -59,6 +64,7 @@
 
 
 
+        <!-- REDESIGNED CREATE SCREEN -->
 <div class="screen" id="screen-create">
   <header class="top-nav create-top">
     <button class="back-btn" id="createBackBtn" type="button" aria-label="Back to home"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m14 5-7 7 7 7"/></svg></button>
@@ -85,6 +91,10 @@
     <button id="startCreateBtn" class="cta-button create-start-btn" type="button">Start Session</button>
   </div>
 </div>
+
+
+             //SCREEN 2: FOCUS / RELAX (Sound Selection Screen 1)
+
         <div class="screen" id="screen-mode">
           <div class="top-nav">
             <div class="back-btn" id="modeBackBtn">
@@ -122,6 +132,10 @@
 
           <button class="cta-button disabled" id="modeStartBtn">Start</button>
         </div>
+
+
+
+             //SCREEN 3: QUICK START / CHOOSE MY SOUNDS (Sound Selection Screen 2)
 
         <div class="screen" id="screen-entry-type">
           <div class="top-nav">
@@ -162,6 +176,10 @@
           <button class="cta-button disabled" id="entryTypeStartBtn">Start</button>
         </div>
 
+
+
+             //SCREEN 4: DYNAMIC SOUND SELECTION (Sound Selection Screen 3a & 3b)
+
         <div class="screen" id="screen-sound-selection">
           <div class="top-nav">
             <div class="back-btn" id="soundSelectBackBtn">
@@ -179,6 +197,10 @@
 
           <button class="cta-button disabled" id="soundSelectStartBtn">Start</button>
         </div>
+
+
+
+             //SCREEN 5: LISTENING SESSION
 
         <div class="screen" id="screen-listening">
           <div style="width: 100%;">
@@ -255,6 +277,44 @@
           </div>
         </div>
 
+        <!-- Spatial Sound Mixer: drag orbs toward center to make a sound louder -->
+        <div class="screen" id="screen-mixer">
+          <div class="mixer-top">
+            <div class="top-nav">
+              <button type="button" class="back-btn" id="mixerBackBtn" aria-label="Return to listening">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <div class="brand-logo">att<span class="brand-u">u</span>ne</div>
+              <button type="button" id="mixerSaveBtn" class="mixer-favorite" title="Save Soundscape" aria-label="Save Soundscape" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 5.5a5.4 5.4 0 0 0-7.7 0l-.7.7-.7-.7a5.4 5.4 0 0 0-7.7 7.7l8.4 8.2 8.4-8.2a5.4 5.4 0 0 0 0-7.7Z"/></svg>
+              </button>
+            </div>
+            <div class="mixer-subtitle">Customize your Soundscape</div>
+            <h1 class="mixer-heading">Sound Mixer</h1>
+          </div>
+          <div class="mixer-stage">
+            <div class="spatial-mixer-board" id="spatialMixerBoard" aria-label="Sound mixer. Move sounds toward center for louder volume.">
+              <div class="mixer-ring"></div><div class="mixer-ring middle"></div><div class="mixer-ring inner"></div>
+              <div class="mixer-center" aria-hidden="true"></div>
+              <div class="mixer-tracks" id="mixerTracks"></div>
+            </div>
+          </div>
+          <div class="mixer-bottom">
+            <div class="mixer-volume-hint" id="mixerTrackDetail" aria-live="polite">Drag sounds closer to the center for more volume</div>
+            <div class="mixer-session-state" id="mixerPlaybackStatus">Soundscape Playing</div>
+            <div class="mixer-session-subtext">Personalized listening</div>
+            <div class="mixer-control-bar">
+              <button type="button" class="mixer-control-side" id="mixerTimerBtn" aria-label="Set session timer" title="Timer">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </button>
+              <button type="button" class="mixer-control-main" id="mixerPlayPauseBtn" aria-label="Pause soundscape" title="Play or pause"></button>
+              <button type="button" class="mixer-control-side" id="mixerDoneBtn" aria-label="Return to listening" title="Done mixing">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><path d="M8 4v6M15 9v6M11 14v6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Timer Modal Sheet -->
         <div class="modal-overlay" id="timerModal">
           <div class="modal-sheet">
@@ -275,6 +335,8 @@
     </div><!-- /.device-frame -->
   </div><!-- /.prototype-stage -->
 
+
+  <!-- DEVELOPER PROTOTYPE CONFIGURATION MODAL -->
   <div class="dev-modal-backdrop" id="devModalBackdrop">
     <div class="dev-panel">
       <h2>
