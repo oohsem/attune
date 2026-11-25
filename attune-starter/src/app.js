@@ -1,3 +1,4 @@
+import { createSoundscapeHome } from './soundscape-home.js';
 import { AUDIO_CATALOG, AUDIO_BY_ID } from './audio-catalog.js';
 import { setupSpatialMixer } from './spatial-mixer.js';
 import { SOUND_GROUPS, generateThemeMix } from './soundscape-generator.js';
@@ -291,6 +292,8 @@ import { SOUND_GROUPS, generateThemeMix } from './soundscape-generator.js';
       if (target) {
         target.classList.add('active');
         State.currentScreen = screenId;
+        if (screenId === 'screen-home') soundscapeHome.renderHome();
+        if (screenId === 'screen-library') soundscapeHome.renderLibrary();
       }
     }
 
@@ -316,37 +319,54 @@ import { SOUND_GROUPS, generateThemeMix } from './soundscape-generator.js';
       ambient: { title: 'Ambient Calm', mode: 'relax', types: ['drone', 'wind'] }
     };
 
-    // Delegated click handling also supports newly saved Soundscapes.
+    // Delegate Home taps so newly saved mixes and Soundprint recommendations play instantly.
     document.getElementById('screen-home').addEventListener('click', event => {
-      const button = event.target.closest('.home-preset');
-      if (!button) return;
-      const savedId = button.dataset.savedId;
-      if (savedId) {
-        const saved = getSavedSoundscapes().find(item => item.id === savedId);
-        if (!saved) return;
-        State.returnScreen = 'screen-home';
-        State.selectedMode = saved.mode;
-        State.currentPreset = null;
-        State.currentSessionSounds = saved.sounds;
-        initListeningScreen(saved.title, saved.mode);
-        saved.sounds.forEach(sound => {
-          const layer = playAudioLayer(sound);
-          if (Number.isFinite(sound.volume)) layer.setVolume?.(sound.volume);
-          State.activeAudioLayers.push(layer);
-        });
-        syncFavoriteButton();
+      const hex = event.target.closest('.home-preset');
+      if (!hex) return;
+      if (hex.dataset.savedId) {
+        const saved = soundscapeHome.getById(hex.dataset.savedId);
+        if (saved) playSavedSoundscape(saved);
         return;
       }
-      const preset = HomePresets[button.dataset.preset];
+      if (hex.dataset.recommendationId) {
+        const suggestion = soundscapeHome.getRecommendation(hex.dataset.recommendationId);
+        if (suggestion) playRecommendedSoundscape(suggestion);
+        return;
+      }
+      const preset = HomePresets[hex.dataset.preset];
       if (!preset) return;
       State.selectedMode = preset.mode;
       State.returnScreen = 'screen-home';
-      State.currentPreset = button.dataset.preset;
-      State.currentSessionSounds = preset.types.map(type => ({ name: type.charAt(0).toUpperCase() + type.slice(1), synthType: type }));
+      State.currentPreset = hex.dataset.preset;
+      State.currentSessionSounds = preset.types.map(type => ({
+        name: type[0].toUpperCase() + type.slice(1), synthType: type
+      }));
       initListeningScreen(preset.title, preset.mode);
       preset.types.forEach(type => State.activeAudioLayers.push(playAudioLayer({ synthType: type })));
       syncFavoriteButton();
     });
+
+    function playMixFromHome(title, mode, sounds, savedId = null) {
+      State.selectedMode = mode;
+      State.returnScreen = 'screen-home';
+      State.currentPreset = null;
+      // Do not mutate a stored Soundscape while changing mixer volumes.
+      State.currentSessionSounds = sounds.map(sound => ({ ...sound }));
+      initListeningScreen(title, mode);
+      State.currentSessionSounds.forEach(sound => {
+        const layer = playAudioLayer(sound);
+        layer.setVolume?.(Number.isFinite(sound.volume) ? sound.volume : 0.5);
+        State.activeAudioLayers.push(layer);
+      });
+      if (savedId) soundscapeHome.markPlayed(savedId);
+      syncFavoriteButton();
+    }
+    function playSavedSoundscape(saved) {
+      playMixFromHome(saved.title, saved.mode, saved.sounds, saved.id);
+    }
+    function playRecommendedSoundscape(recommendation) {
+      playMixFromHome(recommendation.title, recommendation.mode, recommendation.sounds);
+    }
 
     document.querySelectorAll('.home-create').forEach(button => {
       button.addEventListener('click', () => {
@@ -586,6 +606,7 @@ import { SOUND_GROUPS, generateThemeMix } from './soundscape-generator.js';
       State.isPlaying = true;
       updatePlayerUI();
 
+      soundscapeHome.recordListen(mode, State.currentSessionSounds);
       navigateTo('screen-listening');
     }
 
@@ -973,93 +994,33 @@ import { SOUND_GROUPS, generateThemeMix } from './soundscape-generator.js';
       syncFavoriteButton();
     });
 
-    // Only sound identifiers and modes are stored, never temporary uploaded files.
-    const SAVED_KEY = 'attune.soundscapes.v1';
-    function getSavedSoundscapes() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
-        return Array.isArray(saved) ? saved.filter(item => item && item.id && Array.isArray(item.sounds)) : [];
-      } catch { return []; }
-    }
-    function sessionSignature(mode, sounds) {
-      return `${mode}:` + sounds.map(sound =>
-        `${sound.audioId || sound.synthType}:${(Number.isFinite(sound.volume) ? sound.volume : 0.5).toFixed(2)}`
-      ).sort().join(',');
-    }
+    // Keep the original storage key so previously saved Soundscapes remain intact.
+    const soundscapeHome = createSoundscapeHome({
+      catalog: AUDIO_CATALOG,
+      onPlaySaved: saved => playSavedSoundscape(saved),
+      onCreate: () => goToCreate(),
+      onBack: destination => navigateTo(destination === 'library' ? 'screen-library' : 'screen-home'),
+      onChanged: () => syncFavoriteButton(),
+      notify: showToast
+    });
     function syncFavoriteButton() {
       const button = document.getElementById('saveSoundscapeBtn');
-      const saved = getSavedSoundscapes();
-      const isSaved = State.currentSessionSounds.length > 0 && saved.some(item =>
-        sessionSignature(item.mode, item.sounds) === sessionSignature(State.selectedMode, State.currentSessionSounds));
-      button.classList.toggle('saved', isSaved);
-      button.setAttribute('aria-pressed', String(isSaved));
-      button.setAttribute('aria-label', isSaved ? 'Remove saved soundscape' : 'Save this soundscape');
+      const saved = soundscapeHome.hasSession(State.selectedMode, State.currentSessionSounds);
+      button.classList.toggle('saved', saved);
+      button.setAttribute('aria-pressed', String(saved));
+      button.setAttribute('aria-label', saved ? 'Remove saved Soundscape' : 'Save this Soundscape');
       spatialMixer?.syncSaved();
     }
     document.getElementById('saveSoundscapeBtn').addEventListener('click', () => {
-      const sounds = State.currentSessionSounds;
-      if (!sounds.length) { showToast('No sounds to save yet.'); return; }
-      const saved = getSavedSoundscapes();
-      const signature = sessionSignature(State.selectedMode, sounds);
-      const existingIndex = saved.findIndex(item => sessionSignature(item.mode, item.sounds) === signature);
-      if (existingIndex !== -1) {
-        saved.splice(existingIndex, 1);
-        showToast('Removed from saved soundscapes');
-      } else {
-        saved.unshift({
-          id: String(Date.now()),
-          title: document.getElementById('nowListeningTitle').textContent,
-          mode: State.selectedMode || 'relax',
-          sounds: sounds.map(({ name, synthType, audioId, volume }) => ({ name, synthType, audioId, volume: Number.isFinite(volume) ? volume : 0.5 }))
-        });
-        showToast('Saved to your Soundscapes');
-      }
-      try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); }
-      catch { showToast('Saving unavailable on this device'); }
+      soundscapeHome.toggleSession({
+        title: document.getElementById('nowListeningTitle').textContent,
+        mode: State.selectedMode || 'relax',
+        sounds: State.currentSessionSounds
+      });
       syncFavoriteButton();
-      renderSavedSoundscapes();
     });
-    const starterGridMarkup = document.getElementById('savedSoundscapeGrid').innerHTML;
-    function renderSavedSoundscapes() {
-      const saved = getSavedSoundscapes().slice(0, 7);
-      const grid = document.getElementById('savedSoundscapeGrid');
-      const subtitle = document.getElementById('savedSubtitle');
-      if (!saved.length) {
-        subtitle.textContent = 'Starter soundscapes · save yours with ♡';
-        grid.innerHTML = starterGridMarkup;
-        return;
-      }
-      subtitle.textContent = `${saved.length} of your saved mix${saved.length === 1 ? '' : 'es'}`;
-      grid.replaceChildren();
-      saved.forEach((item, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `hex-card home-preset home-hex h${index + 1}`;
-        button.dataset.savedId = item.id;
-        const label = document.createElement('span');
-        label.textContent = item.title;
-        button.title = item.title;
-        button.appendChild(label);
-        grid.appendChild(button);
-      });
-      // Add starter samples after the user's saved mixes to keep the honeycomb layout balanced.
-      const suggested = [
-        ['relax', 'Calm'], ['focus', 'Focus'], ['storm', 'Storm'],
-        ['water', 'Flow'], ['ambient', 'Ambient'], ['rain', 'Rain'], ['wind', 'Wind']
-      ];
-      suggested.slice(0, 7 - saved.length).forEach(([preset, title], index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `hex-card home-preset home-hex h${saved.length + index + 1}`;
-        button.dataset.preset = preset;
-        const label = document.createElement('span');
-        label.textContent = title;
-        button.appendChild(label);
-        grid.appendChild(button);
-      });
-    }
     renderCreateSounds();
-    renderSavedSoundscapes();
+    soundscapeHome.renderHome();
     ['openTimerBtn', 'masterPlayPauseBtn', 'mixerBtn'].forEach(id => {
       const element = document.getElementById(id);
       element.addEventListener('keydown', event => {

@@ -1,0 +1,131 @@
+/* Attune Saved Soundscapes + Soundprint: connected, responsive honeycomb.
+   Overrides the older absolute h1–h7 positions without modifying styles.css. */
+#screen-home .home-hex-cluster {
+  --honey-width: clamp(57px, calc((100vw - 75px) / 4), 82px);
+  --honey-height: calc(var(--honey-width) * 1.155);
+  --honey-x: calc(var(--honey-width) + 2px);
+  --honey-y: calc(var(--honey-height) * .75 + 1px);
+  position: relative;
+  align-self: center;
+  flex: 0 0 auto;
+  transform: none;
+  transform-origin: center top;
+  width: calc(4 * var(--honey-width) + 6px);
+  max-width: 100%;
+  height: calc(var(--honey-height) + 2 * var(--honey-y) + 5px);
+  margin: 6px auto 14px;
+}
+#screen-home .home-hex-cluster .home-hex {
+  position: absolute;
+  width: var(--honey-width);
+  height: var(--honey-height);
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  transition: filter .18s ease, opacity .18s ease;
+  line-height: 1.1;
+}
+#screen-home .home-hex-cluster .h1 { left: 0; top: 0; }
+#screen-home .home-hex-cluster .h2 { left: calc(2 * var(--honey-x)); top: 0; }
+#screen-home .home-hex-cluster .h3 { left: calc(3 * var(--honey-x)); top: 0; }
+#screen-home .home-hex-cluster .h4 { left: calc(.5 * var(--honey-x)); top: var(--honey-y); }
+#screen-home .home-hex-cluster .h5 { left: calc(1.5 * var(--honey-x)); top: var(--honey-y); }
+#screen-home .home-hex-cluster .h6 { left: calc(2.5 * var(--honey-x)); top: var(--honey-y); }
+#screen-home .home-hex-cluster .h7 { left: var(--honey-x); top: calc(2 * var(--honey-y)); }
+#screen-home .home-hex-cluster .home-hex > span,
+#screen-home .home-hex-cluster .saved-library-hex {
+  color: #def2ff;
+  font-size: clamp(9px, 2.4vw, 12px);
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+  padding: 0 7px;
+}
+#screen-home .home-hex-cluster .home-hex:hover { filter: brightness(1.2) drop-shadow(0 0 6px #73bafa); }
+#screen-home .home-hex-cluster .home-hex:focus-visible {
+  outline: 2px solid #c4eaff;
+  outline-offset: 3px;
+}
+#screen-home .home-hex-cluster .saved-library-hex {
+  background: linear-gradient(145deg, #52d9ff, #b39bff 72%, #ffccfa);
+  color: #fff;
+  font-size: clamp(10px, 2.6vw, 13px);
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+#screen-home .home-hex-cluster .saved-library-hex::before {
+  background: linear-gradient(155deg, #335e8a, #24385a 75%);
+  inset: 2px;
+}
+#screen-home .home-hex-cluster .saved-create-hex { color: #d0f0ff; font-size: 11px; font-weight: 700; }
+#screen-home .home-hex-cluster .saved-empty-hex { opacity: .27; pointer-events: none; filter: grayscale(.3); }
+#screen-home .home-hex-cluster .saved-empty-hex > span { font-size: 19px; }
+#screen-home .home-hex-cluster .saved-hex-pin {
+  position: absolute;
+  z-index: 3;
+  top: 15%; right: 24%;
+  color: #ffe3a5;
+  font-size: 9px;
+  font-style: normal;
+  pointer-events: none;
+}
+#screen-home .home-soundprint-grid .soundprint-discovery-hex { filter: drop-shadow(0 0 9px rgba(173, 143, 255, .55)); }
+#screen-home .home-soundprint-grid .soundprint-hex > span { font-size: clamp(9px, 2.35vw, 12px); overflow-wrap: anywhere; }
+#screen-home .home-second-heading { padding-top: 5px; }
+
+/* Full saved library screen */
+#screen-library {
+  padding: 48px 22px max(30px, env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 45% 95%, #293c5d, #141c2b 65%, #11151e);
+}
+.saved-library-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; min-height: 44px;
+}
+.saved-library-top .back-btn { position: static; flex: 0 0 42px; }
+.saved-library-top .brand-logo { margin-left: auto; font-size: 20px; }
+.saved-library-heading { margin-top: 18px; margin-bottom: 5px; color: #e3f4ff; font-size: 25px; line-height: 1.25; }
+.saved-library-description, #savedLibraryCount { color: #9fc1d9; font-size: 12px; line-height: 1.5; }
+.saved-library-filters { display: flex; gap: 10px; margin: 20px 0 11px; }
+.saved-library-filters input, .saved-library-filters select, .saved-library-rename input {
+  min-width: 0; border: 1px solid #4d6c8f; border-radius: 13px;
+  background: #16243a; color: #e9f6ff; font: inherit; font-size: 13px;
+  padding: 12px 10px; outline-offset: 2px;
+}
+.saved-library-filters input { flex: 1 1 55%; }
+.saved-library-filters select { flex: 0 1 42%; }
+.saved-library-list { display: flex; flex-direction: column; gap: 11px; margin: 13px 0 20px; }
+.saved-library-card {
+  background: linear-gradient(140deg, #233550, #17233a);
+  border: 1px solid #486187;
+  padding: 15px; border-radius: 19px; color: #e3f1ff;
+}
+.saved-library-card-head h3 { font-size: 15px; line-height: 1.4; margin: 0; overflow-wrap: anywhere; }
+.saved-library-card-head p { margin: 4px 0 12px; font-size: 11px; color: #acc5db; }
+.saved-library-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.saved-library-action, .saved-library-create {
+  background: rgba(86,139,192,.16); border: 1px solid #5a799e;
+  color: #e6f6ff; border-radius: 12px; cursor: pointer;
+  padding: 8px 10px; font: inherit; font-size: 11px;
+}
+.saved-library-action:hover, .saved-library-action:focus-visible { border-color: #9fe3ff; background: #355074; }
+.saved-library-action.is-pinned { color: #ffe6ad; }
+.saved-library-action.saved-library-delete { color: #ffbdc1; border-color: #8b515b; margin-left: auto; }
+.saved-library-rename { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.saved-library-rename input { flex: 1 1 100%; }
+.saved-library-empty, .saved-library-no-results {
+  margin-top: 24px; text-align: center; border: 1px dashed #527194;
+  background: rgba(42,61,91,.4); border-radius: 18px;
+  padding: 30px 15px; color: #c1e1f7;
+}
+.saved-library-empty h2 { font-size: 17px; margin: 0 0 10px; }
+.saved-library-empty p { font-size: 12px; line-height: 1.5; color: #a3bed4; margin-bottom: 16px; }
+.saved-library-create { background: #3379b6; border-color: #6fcafa; font-size: 13px; padding: 12px 18px; }
+@media (max-width: 355px) {
+  #screen-library { padding-left: 13px; padding-right: 13px; }
+  #screen-home .home-hex-cluster { --honey-width: clamp(55px, calc((100vw - 65px) / 4), 73px); }
+  .saved-library-actions { gap: 5px; }
+  .saved-library-action { padding: 7px 8px; }
+}
